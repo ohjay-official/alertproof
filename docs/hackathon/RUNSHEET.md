@@ -46,7 +46,9 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 - So CI is the laptop: `.github/workflows/verify.yml` installs, runs types, tests, curve vectors and the Go/No-Go, and publishes logs to the `verify-results` branch. Read them with `git fetch origin verify-results`.
 - Locally, `npm run test:rules` runs the rule layer with plain Node.
 
+- Nov 11: Independent review done, findings fixed or accepted (docs/SECURITY.md). Genuine part payments are kept. The pay page builds the lock itself (16-byte nonce, no tags) rather than through cashu-ts's p2pk option, so the tested path is the shipped path; receipt now 2,368 characters for 6 proofs. Go/No-Go 20/20.
+
 ## Next step
 
-1. Fold in the independent security review of src/verify (started Nov 11), then write docs/SECURITY.md with every review and security pass.
+1. Static analysis pass, then per-sale lock keys (review #7's medium finding on restored phones) if they fit the time.
 2. Build order step 2, continued: the customer pay page (Lightning invoice from a mint quote, then ecash minted locked to the trader with small receipts), the trader screens, IndexedDB replay store, then the animated receipt QR. Decode and mint cache modules are done.

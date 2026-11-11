@@ -13,3 +13,5 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 - Lockfile pinned from CI.
 - App modules: the trader's mint cache (src/wallet/mint-cache.ts) and cashuB receipt decoding (src/wallet/receipt.ts). The Go/No-Go now runs on them: still 18 of 18, 70 tests in CI.
 - Placeholder site (web/) and a Vercel deploy workflow adapted from Contri; it deploys once VERCEL_TOKEN is added.
+- Independent review by a separate agent: no false green for unsigned or take-back-able ecash; fixed its two high findings (replay vs "short by", part payments kept) and the rest (fees, keyset expiry, 512-char secrets, check order, wording). Recorded in docs/SECURITY.md.
+- Compact lock (16-byte nonce, no tags) cut the receipt from 2,896 to 2,368 characters. Go/No-Go: 20 of 20, 76 tests in CI.
