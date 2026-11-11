@@ -1,0 +1,8 @@
+v22.23.4
+alertproof@0.1.0 /home/runner/work/alertproof/alertproof
+├── @cashu/cashu-ts@4.13.1
+├── @noble/curves@2.4.0
+├── @noble/hashes@2.4.0
+├── @types/node@22.20.5
+└── typescript@6.0.3
+

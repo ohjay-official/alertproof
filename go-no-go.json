@@ -1,0 +1,117 @@
+{
+  "go": true,
+  "steps": [
+    {
+      "step": "mint supports P2PK locks (NUT-11) and offline proofs (NUT-12)",
+      "pass": true,
+      "note": "version cdk-mintd/0.18.1"
+    },
+    {
+      "step": "customer gets mint-signed ecash locked to the trader",
+      "pass": true,
+      "note": "6 proofs, 1334 sats for a 1333 sat price"
+    },
+    {
+      "step": "receipt decodes from cashuB with every DLEQ proof kept",
+      "pass": true,
+      "note": "2368 characters"
+    },
+    {
+      "step": "trader check is green with the network off",
+      "pass": true,
+      "note": "62 ms"
+    },
+    {
+      "step": "trader check made no network request",
+      "pass": true,
+      "note": "0 blocked"
+    },
+    {
+      "step": "first scan is accepted and recorded",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "step": "second scan of the same receipt: \"Already received\"",
+      "pass": true,
+      "note": "already_received"
+    },
+    {
+      "step": "genuine part payment is kept, and the trader is told to ask for the rest",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "step": "the same part payment shown again for a bigger price",
+      "pass": true,
+      "note": "already_received"
+    },
+    {
+      "step": "same receipt relabelled to a mint the trader did not choose",
+      "pass": true,
+      "note": "untrusted_mint"
+    },
+    {
+      "step": "edited amount",
+      "pass": true,
+      "note": "bad_signature"
+    },
+    {
+      "step": "token signed by an attacker mint, labelled as the trusted mint",
+      "pass": true,
+      "note": "bad_signature"
+    },
+    {
+      "step": "(control) the same fake passes only if the trader had cached the attacker keys",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "step": "receipt locked to someone else",
+      "pass": true,
+      "note": "not_locked_to_you"
+    },
+    {
+      "step": "real token with a locktime and refund key: \"could take it back\"",
+      "pass": true,
+      "note": "can_be_taken_back"
+    },
+    {
+      "step": "customer cannot spend the locked payment (no signature)",
+      "pass": true,
+      "note": "mint said 400 Witness signatures not provided. P2PK signatures are required but not provided"
+    },
+    {
+      "step": "customer cannot spend it with their own key's signature",
+      "pass": true,
+      "note": "mint said 400 P2PK spend conditions are not met"
+    },
+    {
+      "step": "payment still unspent after both attempts",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "step": "trader collects the full price with their signature",
+      "pass": true,
+      "note": "1333 sats for a 1333 sat price, mint fee 1"
+    },
+    {
+      "step": "the receipt is now spent at the mint",
+      "pass": true,
+      "note": ""
+    }
+  ],
+  "info": {
+    "mint": "https://testnut.cashu.space",
+    "startedAt": "2026-11-11T15:56:17.872Z",
+    "mintVersion": "cdk-mintd/0.18.1",
+    "keysetId": "017bc604aaa08e9b58804bdd552286f15d75ebdaa3d1bccc2a52fc7406b4040fda",
+    "inputFeePpk": 100,
+    "cacheBytes": 5408,
+    "paidSats": 1334,
+    "receiptChars": 2368,
+    "offlineCheckMs": 62,
+    "finishedAt": "2026-11-11T15:56:29.178Z"
+  }
+}

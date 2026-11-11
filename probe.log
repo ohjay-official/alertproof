@@ -1,0 +1,7 @@
+== https://nofees.testnut.cashu.space
+curl: (6) Could not resolve host: nofees.testnut.cashu.space
+
+HTTP 000 in 0.032024s
+== https://testnut.cashu.space
+OST","path":"/v1/melt/bolt11"},{"method":"POST","path":"/v1/mint/bolt12"},{"method":"POST","path":"/v1/melt/bolt12"},{"method":"POST","path":"/v1/mint/onchain"},{"method":"POST","path":"/v1/melt/onchain"}]},"20":{"supported":true},"29":{"max_batch_size":100,"methods":["bolt11","bolt12","onchain"]}},"icon_url":"https://image.nostr.build/46ee47763c345d2cfa3317f042d332003f498ee281fb42808d47a7d3b9585911.png","motd":"This test mint has been reset. Old tokens and quotes are no longer valid. Fake payments only; do not send real funds.","time":1794412577,"max_array_length":1000}
+HTTP 200 in 0.608472s

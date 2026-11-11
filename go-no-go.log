@@ -1,0 +1,27 @@
+AlertProof Go/No-Go on https://testnut.cashu.space
+
+PASS  mint supports P2PK locks (NUT-11) and offline proofs (NUT-12)  (version cdk-mintd/0.18.1)
+PASS  customer gets mint-signed ecash locked to the trader  (6 proofs, 1334 sats for a 1333 sat price)
+PASS  receipt decodes from cashuB with every DLEQ proof kept  (2368 characters)
+PASS  trader check is green with the network off  (62 ms)
+PASS  trader check made no network request  (0 blocked)
+PASS  first scan is accepted and recorded
+PASS  second scan of the same receipt: "Already received"  (already_received)
+PASS  genuine part payment is kept, and the trader is told to ask for the rest
+PASS  the same part payment shown again for a bigger price  (already_received)
+PASS  same receipt relabelled to a mint the trader did not choose  (untrusted_mint)
+PASS  edited amount  (bad_signature)
+PASS  token signed by an attacker mint, labelled as the trusted mint  (bad_signature)
+PASS  (control) the same fake passes only if the trader had cached the attacker keys
+PASS  receipt locked to someone else  (not_locked_to_you)
+PASS  real token with a locktime and refund key: "could take it back"  (can_be_taken_back)
+PASS  customer cannot spend the locked payment (no signature)  (mint said 400 Witness signatures not provided. P2PK signatures are required but not provided)
+PASS  customer cannot spend it with their own key's signature  (mint said 400 P2PK spend conditions are not met)
+PASS  payment still unspent after both attempts
+PASS  trader collects the full price with their signature  (1333 sats for a 1333 sat price, mint fee 1)
+PASS  the receipt is now spent at the mint
+
+20/20 steps passed
+{"mint":"https://testnut.cashu.space","startedAt":"2026-11-11T15:56:17.872Z","mintVersion":"cdk-mintd/0.18.1","keysetId":"017bc604aaa08e9b58804bdd552286f15d75ebdaa3d1bccc2a52fc7406b4040fda","inputFeePpk":100,"cacheBytes":5408,"paidSats":1334,"receiptChars":2368,"offlineCheckMs":62,"finishedAt":"2026-11-11T15:56:29.178Z"}
+
+GO
