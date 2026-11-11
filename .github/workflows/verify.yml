@@ -49,6 +49,14 @@ jobs:
         continue-on-error: true
         run: set -o pipefail && npm test 2>&1 | tee ci-out/test.log
 
+      - name: Probe the test mints
+        continue-on-error: true
+        run: |
+          for m in https://nofees.testnut.cashu.space https://testnut.cashu.space; do
+            echo "== $m"
+            curl -sS -m 20 -w '\nHTTP %{http_code} in %{time_total}s\n' "$m/v1/info" 2>&1 | tail -c 600
+          done | tee ci-out/probe.log
+
       - name: Go/No-Go on the test mint
         id: gonogo
         continue-on-error: true

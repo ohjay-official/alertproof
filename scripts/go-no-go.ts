@@ -34,7 +34,12 @@ import {
   verifyBlindDleq,
 } from '../src/verify/curve-noble.ts';
 
-const MINT = (process.env.MINT_URL ?? 'https://nofees.testnut.cashu.space').replace(/\/+$/, '');
+// Public Cashu test mints (docs.cashu.space/faq), tried in order. MINT_URL overrides.
+const CANDIDATES = (process.env.MINT_URL ?? 'https://nofees.testnut.cashu.space,https://testnut.cashu.space')
+  .split(',')
+  .map((u) => u.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+let MINT = CANDIDATES[0]!;
 const PRICE_SATS = 1333; // about NGN 2,000 in the demo story
 const utf8 = (s: string) => new TextEncoder().encode(s);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -171,11 +176,39 @@ function attackerSign(B_hex: string, a: bigint): BlindSig & { A: string } {
 
 // ---------------------------------------------------------------- the run
 
-async function main(): Promise<void> {
-  console.log(`AlertProof Go/No-Go on ${MINT}\n`);
+function describe(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause = (err as { cause?: unknown }).cause;
+  return cause instanceof Error ? `${err.message}: ${cause.message}` : err.message;
+}
 
+/** Pick the first candidate mint that answers, retrying briefly. */
+async function pickMint(): Promise<{ status: number; json: any }> {
+  const errors: string[] = [];
+  for (const url of CANDIDATES) {
+    MINT = url;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const r = await api('/v1/info');
+        if (r.status === 200) {
+          info.mint = MINT;
+          if (errors.length) info.mintFallbackReasons = errors;
+          return r;
+        }
+        errors.push(`${url}: HTTP ${r.status}`);
+      } catch (err) {
+        errors.push(`${url}: ${describe(err)}`);
+      }
+      await sleep(2000 * attempt);
+    }
+  }
+  throw new Error(`no test mint answered: ${errors.join('; ')}`);
+}
+
+async function main(): Promise<void> {
   // 1. Trader setup, online once: mint info, keys, the trader's key.
-  const mintInfo = await api('/v1/info');
+  const mintInfo = await pickMint();
+  console.log(`AlertProof Go/No-Go on ${MINT}\n`);
   const nuts = mintInfo.json?.nuts ?? {};
   info.mintVersion = mintInfo.json?.version;
   record(
@@ -321,7 +354,7 @@ try {
 } catch (err) {
   crashed = err;
   networkOn();
-  record('run finished without an error', false, err instanceof Error ? err.message : String(err));
+  record('run finished without an error', false, describe(err));
 }
 
 const go = steps.length > 0 && steps.every((s) => s.pass) && crashed === null;
