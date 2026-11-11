@@ -46,6 +46,8 @@ export interface CachedKeyset {
   keys: Record<string, string>;
   /** NUT-02 input fee in parts per thousand of a sat, per proof. 0 if absent. */
   input_fee_ppk?: number;
+  /** NUT-02 (v2 keysets): unix seconds after which the mint refuses this keyset's proofs. */
+  final_expiry?: number;
 }
 
 /** A mint the trader chose, with everything needed to check offline. */
@@ -64,8 +66,13 @@ export interface TraderContext {
 }
 
 export interface CheckOptions {
-  /** Amount the trader asked for, in sats. Leave out for sticker payments with no amount set. */
+  /**
+   * Amount the trader asked for, in sats, to land in their wallet after the
+   * mint's collect fee. Leave out for sticker payments with no amount set.
+   */
   requestedSats?: number;
+  /** Current time in unix seconds, for keyset expiry. Defaults to the phone's clock. */
+  nowSeconds?: number;
 }
 
 /**
@@ -82,13 +89,11 @@ export interface CurveOps {
   verifyProofDleq(p: { Y: string; C: string; e: string; s: string; r: string; A: string }): boolean;
 }
 
-export interface Accepted {
-  ok: true;
+/** A genuine payment to the trader: every check passed except, perhaps, the amount. */
+export interface Received {
   /** Normalized mint URL. */
   mint: string;
   totalSats: number;
-  /** totalSats minus the requested amount; 0 when nothing was requested. */
-  overpaidSats: number;
   /** What the mint will charge when the trader collects (NUT-02 input fees), in sats. */
   feeSats: number;
   /** hash_to_curve(secret) for each proof: the replay keys. */
@@ -96,13 +101,25 @@ export interface Accepted {
   proofs: Proof[];
 }
 
+export interface Accepted extends Received {
+  ok: true;
+  /** What lands after the fee, minus the requested amount; 0 when nothing was requested. */
+  overpaidSats: number;
+}
+
 export interface Refused {
   ok: false;
   code: FailCode;
   /** Developer detail. Never shown as the trader's main message, never contains personal data. */
   detail: string;
-  /** Set only for `underpaid`, after every signature checked out: what the receipt does carry. */
-  totalSats?: number;
+  /**
+   * Only for `underpaid`, after every check but the amount passed: the genuine
+   * part payment. The money is locked to the trader either way, so
+   * `acceptReceipt` keeps it (and says so with `kept`), and a second showing
+   * of the same receipt is "already received", never "short by".
+   */
+  received?: Received;
+  kept?: boolean;
 }
 
 export type Verdict = Accepted | Refused;

@@ -21,7 +21,10 @@
 
 export type StrictValue = string | StrictValue[] | Map<string, StrictValue>;
 
-export const MAX_SECRET_LENGTH = 1024;
+// Mints cap secret length when proofs are spent (nutshell at 512), and the
+// mint never sees the secret until the trader collects. A longer secret could
+// be green here and refused at collect time.
+export const MAX_SECRET_LENGTH = 512;
 const MAX_DEPTH = 4;
 
 export class StrictJsonError extends Error {}

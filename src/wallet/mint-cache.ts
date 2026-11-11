@@ -42,7 +42,12 @@ export async function fetchTrustedMint(rawUrl: string, fetchFn: typeof fetch = f
     if (Object.keys(keys).length === 0) throw new Error(`keyset ${k.id} has no usable keys`);
     const fee = k.input_fee_ppk ?? 0;
     if (!Number.isSafeInteger(fee) || fee < 0) throw new Error(`keyset ${k.id} reports an invalid input fee`);
-    keysets.push({ id: k.id, unit: 'sat', keys, input_fee_ppk: fee });
+    const ks: CachedKeyset = { id: k.id, unit: 'sat', keys, input_fee_ppk: fee };
+    if (k.final_expiry !== undefined && k.final_expiry !== null) {
+      if (!Number.isSafeInteger(k.final_expiry)) throw new Error(`keyset ${k.id} reports an invalid expiry`);
+      ks.final_expiry = k.final_expiry;
+    }
+    keysets.push(ks);
   }
   return { url, info: { nuts }, keysets };
 }

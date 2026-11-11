@@ -112,6 +112,15 @@ test('refuses sigflags and tags we do not accept', () => {
   expectCode(withTags(JSON.stringify(Array.from({ length: 9 }, () => ['sigflag', 'SIG_INPUTS']))), 'unsupported_lock');
 });
 
+test('review #3: the nonce must be 8 to 32 bytes of hex, keeping secrets well inside mint limits', () => {
+  for (const n of ['a'.repeat(16), 'A'.repeat(64), 'ab'.repeat(16)]) {
+    expectOk(secret(`"nonce":"${n}","data":"${TRADER}"`));
+  }
+  for (const n of ['abc', 'a'.repeat(66), 'z'.repeat(32), 'nonce-with-dashes-0123456789abcd', 'a'.repeat(600)]) {
+    expectCode(secret(`"nonce":"${n}","data":"${TRADER}"`), 'not_locked_to_you');
+  }
+});
+
 test('refuses everything when our own cached key is broken', () => {
   const r = checkLock(withTags('[]'), 'not a key');
   assert.equal(r.ok, false);

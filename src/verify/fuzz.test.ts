@@ -99,7 +99,8 @@ test(`one random change to a genuine receipt is never green (${RUNS} runs, seed 
 
 test(`random changes to a valid lock never produce a lock to someone else that passes (${RUNS} runs)`, () => {
   const rand = rng(SEED + 1);
-  const base = JSON.stringify(['P2PK', { nonce: 'abcd', data: TRADER, tags: [['sigflag', 'SIG_INPUTS']] }]);
+  const base = JSON.stringify(['P2PK', { nonce: '0123456789abcdef0123456789abcdef', data: TRADER, tags: [['sigflag', 'SIG_INPUTS']] }]);
+  assert.deepEqual(checkLock(base, TRADER), { ok: true });
   for (let run = 0; run < RUNS; run++) {
     let s = base;
     const edits = 1 + Math.floor(rand() * 3);

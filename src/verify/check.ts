@@ -2,19 +2,20 @@
  * The offline receipt check. No network, no dependencies: elliptic curve
  * operations come in through `CurveOps`.
  *
- * Order matters for what the trader is told. Signatures are checked before
- * the amount, so "underpaid" is only ever shown for a genuine receipt. If a
- * forged receipt could say "short by 500 sats", the trader might ask for 500
- * more and release the goods for a payment that was mostly fake.
+ * Order matters for what the trader is told. Signatures come before the lock
+ * reasons and the amount, so "underpaid" or "could take it back" is only ever
+ * said about a receipt the mint really signed. If a forged receipt could say
+ * "short by 500 sats", the trader might ask for 500 more and release the
+ * goods for a payment that was mostly fake.
  *
  *   1. receipt shape, unit, mint is one the trader chose, mint supports NUT-11 and NUT-12
- *   2. every proof: shape, DLEQ present, keyset and amount key in the cache
- *   3. every proof: locked to the trader with no way back (lock.ts)
- *   4. every proof: Y = hash_to_curve(secret), no proof twice, DLEQ verifies
- *   5. total covers the requested amount
+ *   2. every proof: shape, DLEQ present, keyset cached and not expired, amount key, worth more than its fee
+ *   3. every proof: Y = hash_to_curve(secret), no proof twice, DLEQ verifies
+ *   4. every proof: locked to the trader with no way back (lock.ts)
+ *   5. what lands after the mint's collect fee covers the requested amount
  *
  * Replay (the same receipt shown twice) is handled by `acceptReceipt`, which
- * records the receipt only when everything above passes.
+ * records a genuine receipt, full or part payment, exactly once.
  */
 
 import { checkLock, isPubkeyHex } from './lock.ts';
@@ -27,6 +28,7 @@ import type {
   CurveOps,
   FailCode,
   Proof,
+  Received,
   Refused,
   TraderContext,
   TrustedMint,
@@ -132,6 +134,7 @@ export function checkReceipt(
 
   const keysets = new Map<string, CachedKeyset>();
   for (const ks of mint.keysets) keysets.set(ks.id, ks);
+  const now = opts.nowSeconds ?? Math.floor(Date.now() / 1000);
 
   // 2. shape, keys
   const proofs: Proof[] = [];
@@ -143,24 +146,24 @@ export function checkReceipt(
     const ks = keysets.get(p.id);
     if (!ks) return refuse('unknown_keys', `proof ${n}: keyset ${p.id} is not in the cache`);
     if (ks.unit !== 'sat') return refuse('wrong_unit', `proof ${n}: keyset unit is ${String(ks.unit)}`);
+    if (ks.final_expiry !== undefined && !(Number.isSafeInteger(ks.final_expiry) && now < ks.final_expiry)) {
+      return refuse('unknown_keys', `proof ${n}: keyset ${p.id} has expired, the mint would refuse it`);
+    }
     const A = isRecord(ks.keys) ? own(ks.keys, String(p.amount)) : undefined;
     if (!isPubkeyHex(A)) return refuse('unknown_keys', `proof ${n}: no cached key for amount ${p.amount}`);
     const ppk = ks.input_fee_ppk ?? 0;
     if (!Number.isSafeInteger(ppk) || ppk < 0) {
       return refuse('unknown_keys', `proof ${n}: cached input fee is not valid`);
     }
+    // A proof worth no more than its own collect fee adds nothing for the trader.
+    if (p.amount * 1000 <= ppk) return refuse('malformed', `proof ${n}: worth less than its collect fee`);
     feePpk += ppk;
     proofs.push(p);
     amountKeys.push(A);
   }
 
-  // 3. lock
-  for (let n = 0; n < proofs.length; n++) {
-    const lock = checkLock(proofs[n]!.secret, ctx.traderPubkey);
-    if (!lock.ok) return refuse(lock.code, `proof ${n}: ${lock.detail}`);
-  }
-
-  // 4. signatures
+  // 3. signatures. Before the lock reasons, so a forged receipt is only ever
+  //    "not signed by your mint", never a story a scammer can explain away.
   const ys: string[] = [];
   const seen = new Set<string>();
   for (let n = 0; n < proofs.length; n++) {
@@ -194,37 +197,44 @@ export function checkReceipt(
     if (!valid) return refuse('bad_signature', `proof ${n}: DLEQ does not verify against the mint key`);
   }
 
-  // 5. amount
+  // 4. lock
+  for (let n = 0; n < proofs.length; n++) {
+    const lock = checkLock(proofs[n]!.secret, ctx.traderPubkey);
+    if (!lock.ok) return refuse(lock.code, `proof ${n}: ${lock.detail}`);
+  }
+
+  // 5. amount, after the mint's collect fee
   let total = 0;
   for (const p of proofs) {
     total += p.amount;
     if (!Number.isSafeInteger(total)) return refuse('malformed', 'total is too large');
   }
-  if (requested !== undefined && total < requested) {
+  const feeSats = Math.ceil(feePpk / 1000);
+  const received: Received = { mint: mintUrl, totalSats: total, feeSats, ys, proofs };
+  const lands = total - feeSats;
+  if (requested !== undefined && lands < requested) {
     return {
       ok: false,
       code: 'underpaid',
-      detail: `received ${total} of ${requested} sats`,
-      totalSats: total,
+      detail: `${lands} of ${requested} sats land after a ${feeSats} sat fee`,
+      received,
     };
   }
 
   const accepted: Accepted = {
     ok: true,
-    mint: mintUrl,
-    totalSats: total,
-    overpaidSats: requested === undefined ? 0 : total - requested,
-    feeSats: Math.ceil(feePpk / 1000),
-    ys,
-    proofs,
+    ...received,
+    overpaidSats: requested === undefined ? 0 : lands - requested,
   };
   return accepted;
 }
 
 /**
- * Check, then record. The receipt counts as received only if none of its
- * proofs was seen before on this phone; the store records the replay keys and
- * the proofs to collect together, or nothing at all.
+ * Check, then record. A genuine receipt is the trader's money whether or not
+ * it covers the price, so a part payment is recorded too (and marked
+ * `kept`). Either way the store records the replay keys and the proofs to
+ * collect together, or nothing at all, and a receipt that was already
+ * received is "already received", never "short by".
  */
 export async function acceptReceipt(
   token: unknown,
@@ -234,8 +244,9 @@ export async function acceptReceipt(
   store: SeenStore,
 ): Promise<Verdict> {
   const verdict = checkReceipt(token, ctx, opts, curve);
-  if (!verdict.ok) return verdict;
-  const fresh = await store.claim(verdict.ys, verdict);
+  const payment = verdict.ok ? verdict : verdict.code === 'underpaid' ? verdict.received : undefined;
+  if (!payment) return verdict;
+  const fresh = await store.claim(payment.ys, payment);
   if (!fresh) return refuse('already_received', 'one or more proofs were already received on this phone');
-  return verdict;
+  return verdict.ok ? verdict : { ...verdict, kept: true };
 }

@@ -147,8 +147,21 @@ const asInput = (p: Proof, witness?: string) => ({
   ...(witness ? { witness } : {}),
 });
 
-function lockedSecret(pubkey: string, tags: string[][] = [['sigflag', 'SIG_INPUTS']]): string {
-  return JSON.stringify(['P2PK', { nonce: randomHex32(), data: pubkey, tags }]);
+/**
+ * The compact lock the pay page will use: a 16-byte nonce and no tags (no
+ * sigflag means SIG_INPUTS), which keeps receipts, and so the QR, small.
+ */
+function lockedSecret(pubkey: string, tags?: string[][]): string {
+  const nonce = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+  return JSON.stringify(['P2PK', tags ? { nonce, data: pubkey, tags } : { nonce, data: pubkey }]);
+}
+
+/** The smallest amount to mint so that `price` lands after the mint's collect fee. */
+function amountWithFee(price: number, ppk: number): number {
+  for (let x = price; ; x++) {
+    const fee = Math.ceil((split(x).length * ppk) / 1000);
+    if (x - fee >= price) return x;
+  }
 }
 
 async function mintProofs(ks: CachedKeyset, amount: number, secretFor: () => string): Promise<Proof[]> {
@@ -231,10 +244,17 @@ async function main(): Promise<void> {
   const ctx: TraderContext = { traderPubkey: traderPub, mints: [trusted] };
   info.cacheBytes = JSON.stringify(ctx).length;
 
-  // 2. Customer pays: mints ecash locked to the trader's key, keeping the DLEQ.
-  const proofs = await mintProofs(ks, PRICE_SATS, () => lockedSecret(traderPub));
+  // 2. Customer pays: mints ecash locked to the trader's key, keeping the DLEQ,
+  //    plus the mint's collect fee so the full price lands with the trader.
+  const paid = amountWithFee(PRICE_SATS, ks.input_fee_ppk ?? 0);
+  const proofs = await mintProofs(ks, paid, () => lockedSecret(traderPub));
   const token = { mint: MINT, unit: 'sat', proofs };
-  record('customer gets mint-signed ecash locked to the trader', proofs.length > 0, `${proofs.length} proofs, ${PRICE_SATS} sats`);
+  info.paidSats = paid;
+  record(
+    'customer gets mint-signed ecash locked to the trader',
+    proofs.length > 0,
+    `${proofs.length} proofs, ${paid} sats for a ${PRICE_SATS} sat price`,
+  );
 
   // 3. The customer's receipt as the QR would carry it: cashuB, encoded by cashu-ts.
   const encoded = getEncodedToken({ mint: MINT, unit: 'sat', proofs } as any);
@@ -263,6 +283,12 @@ async function main(): Promise<void> {
   record('first scan is accepted and recorded', first.ok);
   expectRefused('second scan of the same receipt: "Already received"', await acceptReceipt(structuredClone(token), ctx, { requestedSats: PRICE_SATS }, nobleCurve, store), 'already_received');
 
+  // A genuine part payment is kept; shown again for any price it is "already received", never "short by".
+  const partStore = new MemorySeenStore();
+  const part = await acceptReceipt(receipt, ctx, { requestedSats: paid * 2 }, nobleCurve, partStore);
+  record('genuine part payment is kept, and the trader is told to ask for the rest', !part.ok && part.code === 'underpaid' && part.kept === true && partStore.payments.length === 1);
+  expectRefused('the same part payment shown again for a bigger price', await acceptReceipt(structuredClone(token), ctx, { requestedSats: paid * 3 }, nobleCurve, partStore), 'already_received');
+
   expectRefused(
     'same receipt relabelled to a mint the trader did not choose',
     checkReceipt({ ...token, mint: 'https://mint.attacker.example' }, ctx, {}, nobleCurve),
@@ -276,7 +302,7 @@ async function main(): Promise<void> {
 
   // An attacker's own mint, using the real keyset id and the real mint URL.
   const a = randomScalar();
-  const fakeOuts = split(PRICE_SATS).map((amt) => blind(amt, ks.id, lockedSecret(traderPub)));
+  const fakeOuts = split(paid).map((amt) => blind(amt, ks.id, lockedSecret(traderPub)));
   const fakeProofs = fakeOuts.map((o) => {
     const sig = attackerSign(o.B_, a);
     return unblind({ ...sig, amount: o.amount, id: ks.id }, o, sig.A);
@@ -304,7 +330,7 @@ async function main(): Promise<void> {
   // 7. Online again: the mint itself enforces the lock.
   const ys = proofs.map((p) => nobleCurve.hashToCurve(p.secret));
   const fee = Math.ceil((proofs.length * (ks.input_fee_ppk ?? 0)) / 1000);
-  const freshOutputs = () => split(PRICE_SATS - fee).map((amt) => blind(amt, ks.id, randomHex32()));
+  const freshOutputs = () => split(paid - fee).map((amt) => blind(amt, ks.id, randomHex32()));
 
   const noSig = await api('/v1/swap', { inputs: proofs.map((p) => asInput(p)), outputs: outputsBody(freshOutputs()) });
   record('customer cannot spend the locked payment (no signature)', noSig.status !== 200, `mint said ${noSig.status} ${noSig.json?.detail ?? ''}`.trim());
@@ -330,7 +356,11 @@ async function main(): Promise<void> {
     const fresh = (collect.json.signatures as BlindSig[]).map((sig, n) => unblind(sig, outs[n]!, ks.keys[String(outs[n]!.amount)]!));
     collected = fresh.reduce((n, p) => n + p.amount, 0);
   }
-  record('trader collects with their signature', collect.status === 200 && collected === PRICE_SATS - fee, `${collected} sats back${fee ? `, fee ${fee}` : ''}${collect.status !== 200 ? `; mint said ${collect.status} ${JSON.stringify(collect.json)}` : ''}`);
+  record(
+    'trader collects the full price with their signature',
+    collect.status === 200 && collected === paid - fee && collected >= PRICE_SATS,
+    `${collected} sats for a ${PRICE_SATS} sat price${fee ? `, mint fee ${fee}` : ''}${collect.status !== 200 ? `; mint said ${collect.status} ${JSON.stringify(collect.json)}` : ''}`,
+  );
 
   const after = await api('/v1/checkstate', { Ys: ys });
   record('the receipt is now spent at the mint', (after.json.states as any[]).every((s) => s.state === 'SPENT'));

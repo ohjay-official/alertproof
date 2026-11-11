@@ -56,7 +56,7 @@ test('underpaid, but only after every signature checks out', () => {
   const token = makeToken(1000, { ks: KS });
   const v = checkReceipt(token, ctx(), { requestedSats: 1333 }, fakeCurve);
   expectCode(v, 'underpaid');
-  assert.ok(!v.ok && v.totalSats === 1000);
+  assert.ok(!v.ok && v.received?.totalSats === 1000);
   // one sat short is still short
   expectCode(checkReceipt(makeToken(1332, { ks: KS }), ctx(), { requestedSats: 1333 }, fakeCurve), 'underpaid');
 
@@ -185,7 +185,7 @@ test('lock problems come through with their own codes', () => {
   expectCode(checkReceipt(makeToken(4, { ks: KS, lockTo: OTHER_TRADER }), ctx(), {}, fakeCurve), 'not_locked_to_you');
   expectCode(checkReceipt(makeToken(4, { ks: KS, secret: () => hex32() }), ctx(), {}, fakeCurve), 'not_locked_to_you');
   const refund = (n: number) =>
-    JSON.stringify(['P2PK', { nonce: hex32() + n, data: TRADER, tags: [['locktime', '1'], ['refund', OTHER_TRADER]] }]);
+    JSON.stringify(['P2PK', { nonce: hex32(), data: TRADER, tags: [['locktime', String(n + 1)], ['refund', OTHER_TRADER]] }]);
   expectCode(checkReceipt(makeToken(4, { ks: KS, secret: refund }), ctx(), {}, fakeCurve), 'can_be_taken_back');
   const shared = () => JSON.stringify(['P2PK', { nonce: hex32(), data: TRADER, tags: [['pubkeys', OTHER_TRADER]] }]);
   expectCode(checkReceipt(makeToken(4, { ks: KS, secret: shared }), ctx(), {}, fakeCurve), 'shared_lock');
@@ -309,7 +309,7 @@ test('replay: the same receipt scanned twice is refused the second time', async 
   assert.equal(first.ok, true);
   const again = await acceptReceipt(clone(token), ctx(), { requestedSats: 1333 }, fakeCurve, store);
   expectCode(again, 'already_received');
-  assert.equal(store.receipts.length, 1);
+  assert.equal(store.payments.length, 1);
 });
 
 test('replay: a receipt reusing one old proof records nothing new', async () => {
@@ -321,19 +321,79 @@ test('replay: a receipt reusing one old proof records nothing new', async () => 
   mixed.proofs.push(clone(old.proofs[0]!));
   expectCode(await acceptReceipt(mixed, ctx(), {}, fakeCurve, store), 'already_received');
   assert.equal(store.seen.size, 1, 'the fresh proof must not be marked as seen');
-  assert.equal(store.receipts.length, 1);
+  assert.equal(store.payments.length, 1);
 
   // the fresh part alone still goes through afterwards
   const freshOnly = { ...mixed, proofs: [mixed.proofs[0]!] };
   assert.equal((await acceptReceipt(freshOnly, ctx(), {}, fakeCurve, store)).ok, true);
 });
 
-test('replay: a refused receipt is not recorded', async () => {
+test('replay: a forged or wrongly locked receipt is not recorded', async () => {
+  const store = new MemorySeenStore();
+  const forged = makeToken(1000, { ks: KS });
+  forged.proofs[0]!.C = '02' + hex32();
+  expectCode(await acceptReceipt(forged, ctx(), {}, fakeCurve, store), 'bad_signature');
+  expectCode(await acceptReceipt(makeToken(8, { ks: KS, lockTo: OTHER_TRADER }), ctx(), {}, fakeCurve, store), 'not_locked_to_you');
+  assert.equal(store.seen.size, 0);
+  assert.equal(store.payments.length, 0);
+});
+
+test('review #1: a receipt already received shows "already received", never "short by"', async () => {
   const store = new MemorySeenStore();
   const token = makeToken(1000, { ks: KS });
-  expectCode(await acceptReceipt(token, ctx(), { requestedSats: 1333 }, fakeCurve, store), 'underpaid');
-  assert.equal(store.seen.size, 0);
   assert.equal((await acceptReceipt(token, ctx(), { requestedSats: 1000 }, fakeCurve, store)).ok, true);
+  // shown again for a bigger sale: must not invite "ask for 333 more"
+  const again = await acceptReceipt(clone(token), ctx(), { requestedSats: 1333 }, fakeCurve, store);
+  expectCode(again, 'already_received');
+});
+
+test('review #2: a genuine part payment is kept, so it can be collected and never counted twice', async () => {
+  const store = new MemorySeenStore();
+  const part = makeToken(1000, { ks: KS });
+  const first = await acceptReceipt(part, ctx(), { requestedSats: 1333 }, fakeCurve, store);
+  expectCode(first, 'underpaid');
+  assert.ok(!first.ok && first.kept === true && first.received?.totalSats === 1000);
+  assert.equal(store.payments.length, 1);
+
+  // the rest arrives as a second receipt
+  const rest = makeToken(333, { ks: KS });
+  assert.equal((await acceptReceipt(rest, ctx(), { requestedSats: 333 }, fakeCurve, store)).ok, true);
+
+  // the first receipt shown again later: already received
+  expectCode(await acceptReceipt(clone(part), ctx(), { requestedSats: 1000 }, fakeCurve, store), 'already_received');
+  assert.equal(store.payments.length, 2);
+});
+
+test('review #5: the amount is what lands after the mint fee', () => {
+  const feeKs = makeKeyset('fee-100', { fee: 100 });
+  const c = ctx({ mints: [makeTrustedMint(MINT_URL, [feeKs])] });
+  // 1333 = 6 proofs, fee ceil(600/1000) = 1, so 1332 lands
+  const exact = checkReceipt(makeToken(1333, { ks: feeKs }), c, { requestedSats: 1333 }, fakeCurve);
+  expectCode(exact, 'underpaid');
+  // 1334 = 6 proofs, fee 1, 1333 lands
+  const covered = checkReceipt(makeToken(1334, { ks: feeKs }), c, { requestedSats: 1333 }, fakeCurve);
+  assert.ok(covered.ok && covered.feeSats === 1 && covered.overpaidSats === 0);
+
+  // dust: 1-sat proofs that cost a whole sat each to collect are refused
+  const dearKs = makeKeyset('fee-1000', { fee: 1000 });
+  const dear = ctx({ mints: [makeTrustedMint(MINT_URL, [dearKs])] });
+  expectCode(checkReceipt(makeToken(1, { ks: dearKs }), dear, {}, fakeCurve), 'malformed');
+});
+
+test('review #6: proofs from an expired keyset are refused', () => {
+  const ks = { ...makeKeyset('expiring'), final_expiry: 2_000_000_000 };
+  const c = ctx({ mints: [makeTrustedMint(MINT_URL, [ks])] });
+  const token = makeToken(4, { ks });
+  assert.equal(checkReceipt(token, c, { nowSeconds: 1_999_999_999 }, fakeCurve).ok, true);
+  expectCode(checkReceipt(token, c, { nowSeconds: 2_000_000_000 }, fakeCurve), 'unknown_keys');
+});
+
+test('review #8: a forged proof with a refund tag says "not signed", not "could take it back"', () => {
+  const secret = JSON.stringify(['P2PK', { nonce: hex32(), data: TRADER, tags: [['refund', OTHER_TRADER]] }]);
+  const token = makeToken(4, { ks: KS, secret: () => secret });
+  expectCode(checkReceipt(token, ctx(), {}, fakeCurve), 'can_be_taken_back'); // genuine: the lock reason
+  token.proofs[0]!.C = '02' + hex32();
+  expectCode(checkReceipt(token, ctx(), {}, fakeCurve), 'bad_signature'); // forged: only "not signed"
 });
 
 test('replay: two scans racing on one phone record it once', async () => {
@@ -344,5 +404,5 @@ test('replay: two scans racing on one phone record it once', async () => {
     acceptReceipt(clone(token), ctx(), {}, fakeCurve, store),
   ]);
   assert.equal(results.filter((r) => r.ok).length, 1);
-  assert.equal(store.receipts.length, 1);
+  assert.equal(store.payments.length, 1);
 });

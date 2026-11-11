@@ -69,9 +69,9 @@ An NFC sticker on the stall (NTAG215, 504 bytes; NTAG213 also fits) holds the li
 1. Token decodes; unit is sat; mint is on the trusted list.
 2. Every keyset id belongs to the cached keysets of that mint; a key exists for every amount.
 3. Every proof has a DLEQ and it verifies against the cached key for its amount.
-4. Every secret is NUT-10 P2PK with data equal to the trader's public key; reject any `refund` tag, any `locktime` (after a locktime with no refund key anyone can spend), any extra `pubkeys`, `n_sigs` above 1.
+4. Every secret is NUT-10 P2PK with data equal to the trader's public key; reject any `refund`, `n_sigs_refund` or `locktime` tag (after a locktime with no refund key anyone can spend), any `pubkeys` or `n_sigs` tag, any sigflag other than SIG_INPUTS, and any unknown tag. The nonce must be 8 to 32 bytes of hex and the secret at most 512 characters, inside mint limits.
 5. The cached mint info lists NUT-11 (a mint without it may treat P2PK proofs as anyone-can-spend).
-6. Total covers the requested amount; overpayment is shown. For sticker payments with no amount set, the big amount on screen is what the trader compares with the price.
+6. What lands after the mint's collect fee covers the requested amount (the pay page adds the fee); overpayment is shown. A genuine part payment is kept and the trader asks for the rest. For sticker payments with no amount set, the big amount on screen is what the trader compares with the price. Signatures are checked before the lock reasons and the amount, so those reasons are only ever shown for a receipt the mint really signed.
 7. Replay: Y = hash_to_curve(secret) not already in the local seen set; insert atomically.
 
 ## Threat model (first draft)

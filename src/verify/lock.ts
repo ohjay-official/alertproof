@@ -18,7 +18,11 @@
  *     NUT-11 says duplicate tags make the proof unspendable, and unknown tags
  *     have no defined meaning, so the trader might not be able to collect.
  *
- * The key must match the trader's key exactly (lowercase, compressed).
+ * The key must match the trader's key exactly (lowercase, compressed). This is
+ * stricter than NUT-11, which compares keys by x-coordinate, so a lock to the
+ * same x with the other 02/03 prefix would still be spendable by the trader.
+ * Refusing it costs nothing (AlertProof's pay page copies the key exactly) and
+ * keeps one way to read a lock.
  */
 
 import { parseStrictJson, StrictJsonError, type StrictValue } from './strict-json.ts';
@@ -27,6 +31,7 @@ import type { FailCode } from './types.ts';
 export type LockResult = { ok: true } | { ok: false; code: FailCode; detail: string };
 
 const PUBKEY_RE = /^0[23][0-9a-f]{64}$/;
+const NONCE_RE = /^[0-9a-fA-F]{16,64}$/;
 const MAX_TAGS = 8;
 const PAYER_WAY_BACK = new Set(['locktime', 'refund', 'n_sigs_refund']);
 const SHARED = new Set(['pubkeys', 'n_sigs']);
@@ -75,8 +80,10 @@ export function checkLock(secret: string, traderPubkey: string): LockResult {
   }
 
   const nonce = body.get('nonce');
-  if (typeof nonce !== 'string' || nonce.length === 0) {
-    return refuse('not_locked_to_you', 'lock has no nonce');
+  if (typeof nonce !== 'string' || !NONCE_RE.test(nonce)) {
+    // cashu-ts, cdk and nutshell all use random hex; anything else is unusual
+    // and could trip a mint's limits when the trader collects
+    return refuse('not_locked_to_you', 'lock has no nonce, or one that is not 8 to 32 bytes of hex');
   }
 
   const data = body.get('data');

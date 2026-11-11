@@ -15,14 +15,16 @@ const verdict = await acceptReceipt(decodedToken, traderContext, { requestedSats
 Every proof in the receipt:
 
 1. comes from a mint the trader chose, which lists NUT-11 and NUT-12 in its cached info
-2. names a keyset and amount key in the trader's cache, unit `sat`
-3. is locked to the trader's key with no way back for the payer (below)
-4. carries a DLEQ proof (NUT-12) that verifies against the cached key for its amount, so the mint really signed this secret for this amount
+2. names a cached keyset (unit `sat`, not past its `final_expiry`) and amount key, and is worth more than its collect fee
+3. carries a DLEQ proof (NUT-12) that verifies against the cached key for its amount, so the mint really signed this secret for this amount
+4. is locked to the trader's key with no way back for the payer (below)
 5. was not seen on this phone before, and appears only once in the receipt
 
-and the total covers the amount asked for. Signatures are checked before the amount, so "less than you asked for" is only ever said about a genuine receipt.
+and what lands after the mint's collect fee (NUT-02) covers the amount asked for. Signatures come before the lock reasons and the amount, so "could take it back" or "part paid" is only ever said about a receipt the mint really signed.
 
-What it can't know offline: whether the trader's own key already spent the proofs elsewhere. Only the trader can spend them, so for a single phone the replay list covers this.
+A genuine receipt that falls short is still the trader's money, so `acceptReceipt` keeps it as a part payment (`kept: true`), and showing the same receipt again, for any price, is "already received", never "short by".
+
+What it can't know offline: whether the trader's own key already spent the proofs elsewhere. Only the trader can spend them, so the replay list on the phone covers this, as long as the list survives: the app asks for persistent storage and puts the list in the trader's backup. A phone restored without it can't tell an old receipt from a new one until it goes online.
 
 ## The only lock accepted
 
@@ -30,7 +32,7 @@ What it can't know offline: whether the trader's own key already spent the proof
 ["P2PK", {"nonce": "<non-empty>", "data": "<trader's key, lowercase compressed hex>", "tags": [["sigflag", "SIG_INPUTS"]]}]
 ```
 
-`tags` may also be empty or left out. Refused, with the reason:
+`tags` may also be empty or left out. The nonce must be 8 to 32 bytes of hex and the whole secret at most 512 characters: the mint only sees the secret when the trader collects, and mints cap its length then. Refused, with the reason:
 
 | In the lock | Code | Why |
 |---|---|---|
