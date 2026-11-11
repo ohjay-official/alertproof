@@ -1,0 +1,108 @@
+name: web
+
+# Deploys web/ to Vercel with the Vercel CLI and a VERCEL_TOKEN secret, so
+# nobody has to click through Vercel's dashboard (adapted from Contri).
+# Creates the Vercel project the first time. Runs on every push that changes
+# web/, and every 30 minutes so a newly added secret is picked up without
+# anyone triggering it (scheduled runs only redeploy when something changed).
+# The result, with the live URL, goes to the web-results branch.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - web/**
+      - scripts/vercel.mjs
+      - .github/workflows/web.yml
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: web
+  cancel-in-progress: false
+
+env:
+  PROJECT: alertproof
+  # Only whether the secret is set, never its value.
+  HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Decide whether to deploy
+        id: decide
+        run: |
+          mkdir -p web-out
+          echo "VERCEL_TOKEN set: $HAS_VERCEL_TOKEN" | tee web-out/secrets.txt
+          if [ "$HAS_VERCEL_TOKEN" != "true" ]; then
+            echo '{"deployed":false,"reason":"VERCEL_TOKEN is not set"}' > web-out/status.json
+            echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          CODE=$(git log -1 --format=%H -- web scripts/vercel.mjs)
+          LAST=$(git fetch -q origin web-results 2>/dev/null && git show FETCH_HEAD:status.json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).fingerprint||"")}catch{console.log("")}})' || true)
+          echo "fingerprint=$CODE" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$LAST" = "$CODE" ]; then
+            echo "Nothing changed since the last deploy."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install the Vercel CLI
+        if: steps.decide.outputs.go == 'true'
+        # Pinned: the CLI runs with the Vercel token.
+        run: npm install -g vercel@65.11.0 --no-audit --no-fund 2>&1 | tail -1 && vercel --version
+
+      - name: Create the Vercel project and link it
+        if: steps.decide.outputs.go == 'true'
+        working-directory: web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node ../scripts/vercel.mjs setup 2>&1 | tee ../web-out/setup.log
+
+      - name: Deploy to production
+        if: steps.decide.outputs.go == 'true'
+        id: deploy
+        working-directory: web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -o pipefail
+          vercel deploy --prod --yes --token "$VERCEL_TOKEN" 2>&1 | tee ../web-out/deploy.log
+          node ../scripts/vercel.mjs domain > ../web-out/domain.txt
+
+      - name: Check the live site
+        if: steps.decide.outputs.go == 'true'
+        run: |
+          URL=$(cat web-out/domain.txt)
+          echo "Production: $URL"
+          for P in / /404 /styles.css /favicon.svg /robots.txt /no-such-page; do
+            printf '%s %s\n' "$(curl -sS -o /dev/null -w '%{http_code}' "$URL$P" 2>&1)" "$P"
+          done | tee web-out/checks.txt
+          # The site sets no cookies; fail if any response does.
+          if curl -sSI "$URL/" | grep -i '^set-cookie:'; then echo "a response set a cookie" | tee -a web-out/checks.txt; exit 1; fi
+          curl -sSI "$URL/" > web-out/headers.txt
+          echo "{\"deployed\":true,\"commit\":\"${GITHUB_SHA}\",\"fingerprint\":\"${{ steps.decide.outputs.fingerprint }}\",\"url\":\"$URL\",\"at\":\"$(date -u +%FT%TZ)\"}" > web-out/status.json
+          cat web-out/status.json
+
+      - name: Publish to the web-results branch
+        if: always() && (steps.decide.outputs.go == 'true' || github.event_name != 'schedule')
+        run: |
+          cd web-out
+          git init -q && git checkout -q -b web-results
+          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git add -A && git commit -q -m "web ${GITHUB_SHA}"
+          for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" web-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done
