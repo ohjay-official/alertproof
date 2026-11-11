@@ -98,7 +98,7 @@ An NFC sticker on the stall (NTAG215, 504 bytes; NTAG213 also fits) holds the li
 
 ## Stack
 
-Static PWA on Vercel, no backend. Vite with plain TypeScript (no framework unless it stays under budget). @cashu/cashu-ts (uses audited @noble libraries), @scure/bip39, a small QR encoder, native BarcodeDetector with a lazy-loaded fallback for iOS, Web Speech (speechSynthesis) and Vibration APIs, Web NFC for the sticker, IndexedDB, a hand-written service worker. Vitest for unit tests, Playwright for end-to-end with the browser set offline. GitHub Actions for CI and deploy.
+Static PWA on Vercel, no backend. Vite with plain TypeScript (no framework unless it stays under budget). @cashu/cashu-ts (uses audited @noble libraries), @scure/bip39, a small QR encoder, native BarcodeDetector with a lazy-loaded fallback for iOS, Web Speech (speechSynthesis) and Vibration APIs, Web NFC for the sticker, IndexedDB, a hand-written service worker. Node's built-in test runner with native TypeScript for unit tests (no test framework to install), Playwright for end-to-end with the browser set offline. GitHub Actions for CI and deploy.
 
 ## Low-bandwidth budget (measured, published in the README)
 

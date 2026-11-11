@@ -1,0 +1,27 @@
+{
+  "name": "alertproof",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Payments a fake alert can't fake: traders confirm Cashu ecash payments offline in one scan.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "test:rules": "node --test src/verify/strict-json.test.ts src/verify/lock.test.ts src/verify/mint-url.test.ts src/verify/check.test.ts src/verify/fuzz.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "go-no-go": "node scripts/go-no-go.ts",
+    "verify": "node scripts/verify.ts"
+  },
+  "dependencies": {
+    "@cashu/cashu-ts": "^4.6.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^6.0.3"
+  }
+}

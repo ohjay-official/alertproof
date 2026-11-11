@@ -1,0 +1,76 @@
+name: verify
+
+# The one-command check, on GitHub's machines (CI is the laptop: this project
+# is built from a phone). Installs packages, then runs the types, the unit,
+# adversarial and fuzz tests, the official Cashu curve vectors, and the
+# Go/No-Go run on the Cashu test mint (fake sats). Logs, installed versions
+# and the lockfile go to the verify-results branch, so a session can read
+# them without anyone copying logs by hand.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        id: install
+        run: |
+          mkdir -p ci-out
+          set -o pipefail
+          npm install --no-audit --no-fund 2>&1 | tee ci-out/install.log
+          { node -v; npm ls --depth=0; } 2>&1 | tee ci-out/versions.txt
+
+      - name: Types
+        id: types
+        continue-on-error: true
+        run: set -o pipefail && npx tsc -p tsconfig.json 2>&1 | tee ci-out/types.log
+
+      - name: Tests and curve vectors
+        id: tests
+        continue-on-error: true
+        run: set -o pipefail && npm test 2>&1 | tee ci-out/test.log
+
+      - name: Go/No-Go on the test mint
+        id: gonogo
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          rc=0
+          node scripts/go-no-go.ts 2>&1 | tee ci-out/go-no-go.log || rc=$?
+          cp go-no-go.json ci-out/ 2>/dev/null || true
+          exit $rc
+
+      - name: Publish to the verify-results branch
+        if: always()
+        run: |
+          cp package-lock.json ci-out/ 2>/dev/null || true
+          cd ci-out
+          echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
+          cat status.json
+          git init -q && git checkout -q -b verify-results
+          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git add -A && git commit -q -m "verify ${GITHUB_SHA}"
+          # GitHub sometimes answers a push with a server error; try again.
+          for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" verify-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done
+
+      - if: steps.install.outcome != 'success' || steps.types.outcome != 'success' || steps.tests.outcome != 'success' || steps.gonogo.outcome != 'success'
+        run: exit 1
