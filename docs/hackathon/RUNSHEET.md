@@ -50,5 +50,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 
 ## Next step
 
+Paused on Nov 11 after the core went GO, for the Apart sprint (Nov 13 to 15). Resume Nov 16 with:
+
 1. Static analysis pass, then per-sale lock keys (review #7's medium finding on restored phones) if they fit the time.
 2. Build order step 2, continued: the customer pay page (Lightning invoice from a mint quote, then ecash minted locked to the trader with small receipts), the trader screens, IndexedDB replay store, then the animated receipt QR. Decode and mint cache modules are done.
