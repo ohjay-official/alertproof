@@ -35,7 +35,8 @@ import {
 } from '../src/verify/curve-noble.ts';
 
 // Public Cashu test mints (docs.cashu.space/faq), tried in order. MINT_URL overrides.
-const CANDIDATES = (process.env.MINT_URL ?? 'https://nofees.testnut.cashu.space,https://testnut.cashu.space')
+// nofees.testnut.cashu.space stopped resolving on Nov 11, 2026; testnut charges 100 ppk per proof.
+const CANDIDATES = (process.env.MINT_URL ?? 'https://testnut.cashu.space,https://nofees.testnut.cashu.space')
   .split(',')
   .map((u) => u.trim().replace(/\/+$/, ''))
   .filter(Boolean);
@@ -258,6 +259,7 @@ async function main(): Promise<void> {
     const ts: any = await import('@cashu/cashu-ts').catch(() => ({}));
     record('receipt survives cashuB encode/decode with DLEQ kept', false, String(err));
     console.log('cashu-ts token exports:', Object.keys(ts).filter((k) => /token/i.test(k)).join(', '));
+    console.log(err instanceof Error ? err.stack?.split('\n').slice(0, 6).join('\n') : '');
   }
 
   // 4. Trader checks with the network switched off.

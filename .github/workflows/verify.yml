@@ -49,6 +49,21 @@ jobs:
         continue-on-error: true
         run: set -o pipefail && npm test 2>&1 | tee ci-out/test.log
 
+      # The library's own type declarations for the token functions, so a
+      # session without package installs can read the exact API.
+      - name: Note the cashu-ts token API
+        continue-on-error: true
+        run: |
+          D=node_modules/@cashu/cashu-ts
+          {
+            echo "== package exports"; node -e 'console.log(Object.keys(require("./node_modules/@cashu/cashu-ts/package.json").exports||{}).join("\n"))'
+            echo "== d.ts files"; find $D -name '*.d.ts' | head -40
+            echo "== getEncodedToken / getDecodedToken / Token / Proof declarations"
+            grep -rhn -A12 -E 'export declare function (getEncodedToken|getDecodedToken)\b|^export (type|interface) (Token|Proof|ProofDLEQ|SerializedDLEQ|Amount)\b|declare (type|class) Amount\b' $D --include='*.d.ts' | head -200
+            echo "== migration notes on tokens and amounts"
+            grep -n -i -E 'getEncodedToken|getDecodedToken|amount|toLowerCase' $D/migration-4.0.0.md 2>/dev/null | head -60
+          } > ci-out/cashu-ts-api.txt 2>&1
+
       - name: Probe the test mints
         continue-on-error: true
         run: |
