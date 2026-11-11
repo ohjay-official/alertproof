@@ -11,3 +11,5 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 - Go/No-Go script for the real test mint, and a CI workflow that runs everything and publishes logs to the verify-results branch.
 - CI: 65 of 65 tests pass, including the official NUT-00 and NUT-12 vectors. Go/No-Go: 18 of 18 on testnut.cashu.space (GO). Fixed on the way: nofees.testnut.cashu.space no longer resolves (switched to testnut), and cashu-ts v4's `getDecodedToken` wants full keyset ids.
 - Lockfile pinned from CI.
+- App modules: the trader's mint cache (src/wallet/mint-cache.ts) and cashuB receipt decoding (src/wallet/receipt.ts). The Go/No-Go now runs on them: still 18 of 18, 70 tests in CI.
+- Placeholder site (web/) and a Vercel deploy workflow adapted from Contri; it deploys once VERCEL_TOKEN is added.

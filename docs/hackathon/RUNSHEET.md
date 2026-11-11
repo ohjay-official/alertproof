@@ -15,7 +15,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 |---|---|---|
 | Nov 11 | Idea locked, repo, spec, research | done |
 | Nov 12 end | Core verifier solid, Go/No-Go passes on the test mint | **GO on Nov 11** (18/18 on testnut.cashu.space); review passes continue |
-| Nov 12 | Live URL (placeholder is fine) | waiting on VERCEL_TOKEN |
+| Nov 12 | Live URL (placeholder is fine) | site and workflow ready; deploys within 30 min of VERCEL_TOKEN being added (result on the web-results branch) |
 | Nov 16 to 19 | App, trader visits (5 by Nov 17), real-money proof, README, film | not started |
 | Nov 19 | Everything frozen except fixes | |
 | Nov 20 midday | Submit once | |
@@ -49,4 +49,4 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 ## Next step
 
 1. Fold in the independent security review of src/verify (started Nov 11), then write docs/SECURITY.md with every review and security pass.
-2. Build order step 2: a decode adapter for cashu-ts v4 tokens (Amount objects, short keyset ids), the trader's cache from a real mint, wallet flows on the test mint, and a placeholder live URL (needs VERCEL_TOKEN).
+2. Build order step 2, continued: the customer pay page (Lightning invoice from a mint quote, then ecash minted locked to the trader with small receipts), the trader screens, IndexedDB replay store, then the animated receipt QR. Decode and mint cache modules are done.
