@@ -249,8 +249,16 @@ async function main(): Promise<void> {
     const ts: any = await import('@cashu/cashu-ts');
     const encode = ts.getEncodedTokenV4 ?? ((t: unknown) => ts.getEncodedToken(t, { version: 4 }));
     const encoded: string = encode({ mint: MINT, unit: 'sat', proofs });
-    const decoded = ts.getDecodedToken(encoded, [{ id: ks.id, unit: 'sat', active: true, input_fee_ppk: 0 }]);
+    // v4: the second argument is the full keyset ids, to expand the short ids in cashuB
+    const decoded = ts.getDecodedToken(encoded, [ks.id]);
+    const sample = decoded.proofs[0]?.amount;
+    info.decodedAmountType = sample?.constructor?.name ?? typeof sample;
+    // cashu-ts v4 may hand back Amount objects; the check takes numbers or bigints
+    for (const p of decoded.proofs as any[]) {
+      if (typeof p.amount === 'object' && p.amount !== null) p.amount = BigInt(String(p.amount));
+    }
     const keptDleq = (decoded.proofs as any[]).every((p) => p.dleq && p.dleq.r);
+    info.decodedKeysetId = decoded.proofs[0]?.id;
     info.receiptChars = encoded.length;
     info.receiptPrefix = encoded.slice(0, 6);
     record('receipt survives cashuB encode/decode with DLEQ kept', keptDleq, `${encoded.length} characters`);
