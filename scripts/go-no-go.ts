@@ -10,6 +10,7 @@
  * Prints PASS or FAIL per step, then GO or NO-GO, and writes go-no-go.json.
  */
 import { writeFile } from 'node:fs/promises';
+import { getEncodedToken } from '@cashu/cashu-ts';
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import {
@@ -33,6 +34,8 @@ import {
   scalarToHex,
   verifyBlindDleq,
 } from '../src/verify/curve-noble.ts';
+import { fetchTrustedMint } from '../src/wallet/mint-cache.ts';
+import { decodeReceipt } from '../src/wallet/receipt.ts';
 
 // Public Cashu test mints (docs.cashu.space/faq), tried in order. MINT_URL overrides.
 // nofees.testnut.cashu.space stopped resolving on Nov 11, 2026; testnut charges 100 ppk per proof.
@@ -217,25 +220,15 @@ async function main(): Promise<void> {
     nuts['11']?.supported === true && nuts['12']?.supported === true,
     `version ${String(mintInfo.json?.version)}`,
   );
-  const keysets = await api('/v1/keysets');
-  const active = (keysets.json.keysets as any[]).find((k) => k.unit === 'sat' && k.active);
-  if (!active) throw new Error('no active sat keyset');
-  const keys = await api(`/v1/keys/${active.id}`);
-  const ks: CachedKeyset = {
-    id: active.id,
-    unit: 'sat',
-    keys: keys.json.keysets[0].keys,
-    input_fee_ppk: active.input_fee_ppk ?? 0,
-  };
+  // The app's own setup code (src/wallet/mint-cache.ts) builds the trader's cache.
+  const trusted = await fetchTrustedMint(MINT);
+  const ks: CachedKeyset = trusted.keysets[0]!;
   info.keysetId = ks.id;
   info.inputFeePpk = ks.input_fee_ppk;
 
   const traderSecret = randomScalar();
   const traderPub = G.multiply(traderSecret).toHex(true);
-  const ctx: TraderContext = {
-    traderPubkey: traderPub,
-    mints: [{ url: MINT, info: { nuts }, keysets: [ks] }],
-  };
+  const ctx: TraderContext = { traderPubkey: traderPub, mints: [trusted] };
   info.cacheBytes = JSON.stringify(ctx).length;
 
   // 2. Customer pays: mints ecash locked to the trader's key, keeping the DLEQ.
@@ -243,36 +236,21 @@ async function main(): Promise<void> {
   const token = { mint: MINT, unit: 'sat', proofs };
   record('customer gets mint-signed ecash locked to the trader', proofs.length > 0, `${proofs.length} proofs, ${PRICE_SATS} sats`);
 
-  // 3. cashuB round trip through cashu-ts, the library the app will use.
-  let receipt: unknown = token;
-  try {
-    const ts: any = await import('@cashu/cashu-ts');
-    const encode = ts.getEncodedTokenV4 ?? ((t: unknown) => ts.getEncodedToken(t, { version: 4 }));
-    const encoded: string = encode({ mint: MINT, unit: 'sat', proofs });
-    // v4: the second argument is the full keyset ids, to expand the short ids in cashuB
-    const decoded = ts.getDecodedToken(encoded, [ks.id]);
-    const sample = decoded.proofs[0]?.amount;
-    info.decodedAmountType = sample?.constructor?.name ?? typeof sample;
-    // cashu-ts v4 may hand back Amount objects; the check takes numbers or bigints
-    for (const p of decoded.proofs as any[]) {
-      if (typeof p.amount === 'object' && p.amount !== null) p.amount = BigInt(String(p.amount));
-    }
-    const keptDleq = (decoded.proofs as any[]).every((p) => p.dleq && p.dleq.r);
-    info.decodedKeysetId = decoded.proofs[0]?.id;
-    info.receiptChars = encoded.length;
-    info.receiptPrefix = encoded.slice(0, 6);
-    record('receipt survives cashuB encode/decode with DLEQ kept', keptDleq, `${encoded.length} characters`);
-    receipt = decoded;
-  } catch (err) {
-    const ts: any = await import('@cashu/cashu-ts').catch(() => ({}));
-    record('receipt survives cashuB encode/decode with DLEQ kept', false, String(err));
-    console.log('cashu-ts token exports:', Object.keys(ts).filter((k) => /token/i.test(k)).join(', '));
-    console.log(err instanceof Error ? err.stack?.split('\n').slice(0, 6).join('\n') : '');
-  }
+  // 3. The customer's receipt as the QR would carry it: cashuB, encoded by cashu-ts.
+  const encoded = getEncodedToken({ mint: MINT, unit: 'sat', proofs } as any);
+  info.receiptChars = encoded.length;
 
-  // 4. Trader checks with the network switched off.
+  // 4. Trader scans and checks with the network switched off, using the app's
+  //    own decode (src/wallet/receipt.ts) and check (src/verify).
   networkOff();
   const t0 = performance.now();
+  const scanned = decodeReceipt(encoded, trusted.keysets.map((k) => k.id));
+  const receipt: unknown = scanned.ok ? scanned.token : null;
+  record(
+    'receipt decodes from cashuB with every DLEQ proof kept',
+    scanned.ok && (scanned.token.proofs as any[]).every((p) => p.dleq?.r),
+    scanned.ok ? `${encoded.length} characters` : scanned.detail,
+  );
   const offline = checkReceipt(receipt, ctx, { requestedSats: PRICE_SATS }, nobleCurve);
   const ms = performance.now() - t0;
   info.offlineCheckMs = Math.round(ms);
