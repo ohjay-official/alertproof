@@ -14,7 +14,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 | By | What | Status |
 |---|---|---|
 | Nov 11 | Idea locked, repo, spec, research | done |
-| Nov 12 end | Core verifier solid, Go/No-Go passes on the test mint | in progress |
+| Nov 12 end | Core verifier solid, Go/No-Go passes on the test mint | **GO on Nov 11** (18/18 on testnut.cashu.space); review passes continue |
 | Nov 12 | Live URL (placeholder is fine) | waiting on VERCEL_TOKEN |
 | Nov 16 to 19 | App, trader visits (5 by Nov 17), real-money proof, README, film | not started |
 | Nov 19 | Everything frozen except fixes | |
@@ -27,6 +27,9 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 - Nov 11: Tests use Node's built-in runner with native TypeScript (zero dev dependencies for the rule layer); Vitest dropped from the stack.
 - Nov 11: Only one lock shape is accepted (P2PK to the trader, sigflag SIG_INPUTS or none). Secrets are read with a narrow parser so the phone and the mint can't read one secret two ways. Signatures are checked before the amount.
 - Nov 11: The Go/No-Go talks to the mint over its plain REST API with blinding on @noble/curves, and round-trips the receipt through cashu-ts (cashuB).
+- Nov 11: Test mint is testnut.cashu.space (cdk-mintd 0.18.1, 100 ppk fee per proof): nofees.testnut.cashu.space no longer resolves.
+- Nov 11: Go/No-Go passed. Measured: offline check 48 ms (CI runner), 1,333 sats = 6 proofs = 2,896 cashuB characters, trader cache 5.4 KB. That receipt is too dense for one QR on a cheap camera, so the receipt QR must be animated, and the customer page should keep receipts small (short nonce, no sigflag tag, which defaults to SIG_INPUTS).
+- Nov 11: Pinned versions from CI's lockfile: @cashu/cashu-ts 4.13.1, @noble/curves 2.4.0, @noble/hashes 2.4.0, typescript 6.0.3. cashu-ts v4 decodes amounts as `Amount` objects and `getDecodedToken` needs the full keyset ids to expand short ones.
 
 ## HIS CALL (open)
 
@@ -45,4 +48,5 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 
 ## Next step
 
-Read `verify-results`. If the Go/No-Go is green, commit the lockfile from it, then start build order step 2 (wallet flows on the test mint, deploy to a public URL).
+1. Fold in the independent security review of src/verify (started Nov 11), then write docs/SECURITY.md with every review and security pass.
+2. Build order step 2: a decode adapter for cashu-ts v4 tokens (Amount objects, short keyset ids), the trader's cache from a real mint, wallet flows on the test mint, and a placeholder live URL (needs VERCEL_TOKEN).

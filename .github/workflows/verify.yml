@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir -p ci-out
           set -o pipefail
-          npm install --no-audit --no-fund 2>&1 | tee ci-out/install.log
+          npm ci --no-audit --no-fund 2>&1 | tee ci-out/install.log
           { node -v; npm ls --depth=0; } 2>&1 | tee ci-out/versions.txt
 
       - name: Types

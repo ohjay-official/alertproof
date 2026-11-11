@@ -109,7 +109,7 @@ Static PWA on Vercel, no backend. Vite with plain TypeScript (no framework unles
 
 ## Demo mode
 
-Test mint with fake sats (nofees.testnut.cashu.space). "Get 5,000 test sats" in one tap. Trader and Customer tabs side by side; a clearly labelled "network off" switch that makes the app refuse all requests, plus the real airplane-mode film. Real-money proof on a mainnet mint with two phones, transaction details in the README.
+Test mint with fake sats (testnut.cashu.space, which charges 100 ppk per proof; nofees.testnut.cashu.space stopped resolving on Nov 11). "Get 5,000 test sats" in one tap. Trader and Customer tabs side by side; a clearly labelled "network off" switch that makes the app refuse all requests, plus the real airplane-mode film. Real-money proof on a mainnet mint with two phones, transaction details in the README.
 
 ## One command
 
