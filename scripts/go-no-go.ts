@@ -4,13 +4,13 @@
  *
  *   node scripts/go-no-go.ts            (MINT_URL=... to use another test mint)
  *
- * The customer side talks to the mint over its plain REST API (NUT-01/02/03/
- * 04/06/07), with blinding done here on @noble/curves, so every byte is
- * visible. The trader side is the app's real offline check (src/verify).
+ * Runs the app's own code on both sides: the customer's pay flow
+ * (src/wallet/pay.ts), the trader's offline check (src/verify), collect and
+ * cash-out (src/wallet/collect.ts), all over the mint's plain REST API with
+ * blinding on @noble/curves. The attacks are built by hand here.
  * Prints PASS or FAIL per step, then GO or NO-GO, and writes go-no-go.json.
  */
 import { writeFile } from 'node:fs/promises';
-import { getEncodedToken } from '@cashu/cashu-ts';
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import {
@@ -35,7 +35,12 @@ import {
   verifyBlindDleq,
 } from '../src/verify/curve-noble.ts';
 import { fetchTrustedMint } from '../src/wallet/mint-cache.ts';
-import { decodeReceipt } from '../src/wallet/receipt.ts';
+import { decodeReceipt, encodeReceipt } from '../src/wallet/receipt.ts';
+import { MintApi } from '../src/wallet/mint-api.ts';
+import { finishPayment, paymentState, startPayment } from '../src/wallet/pay.ts';
+import { cashOut, collect } from '../src/wallet/collect.ts';
+import { newSeed, traderKey } from '../src/wallet/keys.ts';
+import { sumAmounts } from '../src/wallet/ecash.ts';
 
 // Public Cashu test mints (docs.cashu.space/faq), tried in order. MINT_URL overrides.
 // nofees.testnut.cashu.space stopped resolving on Nov 11, 2026; testnut charges 100 ppk per proof.
@@ -45,6 +50,7 @@ const CANDIDATES = (process.env.MINT_URL ?? 'https://testnut.cashu.space,https:/
   .filter(Boolean);
 let MINT = CANDIDATES[0]!;
 const PRICE_SATS = 1333; // about NGN 2,000 in the demo story
+const CASH_OUT_SATS = 1000;
 const utf8 = (s: string) => new TextEncoder().encode(s);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -147,21 +153,10 @@ const asInput = (p: Proof, witness?: string) => ({
   ...(witness ? { witness } : {}),
 });
 
-/**
- * The compact lock the pay page will use: a 16-byte nonce and no tags (no
- * sigflag means SIG_INPUTS), which keeps receipts, and so the QR, small.
- */
+/** A lock built by hand, so the attacks can add tags the pay page never would. */
 function lockedSecret(pubkey: string, tags?: string[][]): string {
   const nonce = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
   return JSON.stringify(['P2PK', tags ? { nonce, data: pubkey, tags } : { nonce, data: pubkey }]);
-}
-
-/** The smallest amount to mint so that `price` lands after the mint's collect fee. */
-function amountWithFee(price: number, ppk: number): number {
-  for (let x = price; ; x++) {
-    const fee = Math.ceil((split(x).length * ppk) / 1000);
-    if (x - fee >= price) return x;
-  }
 }
 
 async function mintProofs(ks: CachedKeyset, amount: number, secretFor: () => string): Promise<Proof[]> {
@@ -239,25 +234,32 @@ async function main(): Promise<void> {
   info.keysetId = ks.id;
   info.inputFeePpk = ks.input_fee_ppk;
 
-  const traderSecret = randomScalar();
-  const traderPub = G.multiply(traderSecret).toHex(true);
+  // The app's own key setup (src/wallet/keys.ts): a seed, and the lock key from it.
+  const trader = traderKey(newSeed());
+  const traderPub = trader.pub;
   const ctx: TraderContext = { traderPubkey: traderPub, mints: [trusted] };
   info.cacheBytes = JSON.stringify(ctx).length;
 
-  // 2. Customer pays: mints ecash locked to the trader's key, keeping the DLEQ,
-  //    plus the mint's collect fee so the full price lands with the trader.
-  const paid = amountWithFee(PRICE_SATS, ks.input_fee_ppk ?? 0);
-  const proofs = await mintProofs(ks, paid, () => lockedSecret(traderPub));
-  const token = { mint: MINT, unit: 'sat', proofs };
+  // 2. Customer pays with the app's pay flow: an invoice for the price plus the
+  //    mint's collect fee, then ecash locked to the trader's key, DLEQ kept.
+  const mintApi = new MintApi(MINT);
+  const pending = await startPayment(mintApi, ks, traderPub, PRICE_SATS);
+  for (let i = 0; (await paymentState(mintApi, pending)) !== 'PAID'; i++) {
+    if (i >= 30) throw new Error('the test invoice was never paid');
+    await sleep(1000);
+  }
+  const token = await finishPayment(mintApi, pending, ks);
+  const proofs = token.proofs;
+  const paid = sumAmounts(proofs);
   info.paidSats = paid;
   record(
     'customer gets mint-signed ecash locked to the trader',
-    proofs.length > 0,
+    paid === pending.amountSats && paid >= PRICE_SATS,
     `${proofs.length} proofs, ${paid} sats for a ${PRICE_SATS} sat price`,
   );
 
-  // 3. The customer's receipt as the QR would carry it: cashuB, encoded by cashu-ts.
-  const encoded = getEncodedToken({ mint: MINT, unit: 'sat', proofs } as any);
+  // 3. The customer's receipt as the QR carries it: cashuB, with the app's encoder.
+  const encoded = encodeReceipt(token);
   info.receiptChars = encoded.length;
 
   // 4. Trader scans and checks with the network switched off, using the app's
@@ -345,25 +347,42 @@ async function main(): Promise<void> {
   const before = await api('/v1/checkstate', { Ys: ys });
   record('payment still unspent after both attempts', (before.json.states as any[]).every((s) => s.state === 'UNSPENT'));
 
-  const traderKey = hexToBytes(scalarToHex(traderSecret));
-  const outs = freshOutputs();
-  const collect = await api('/v1/swap', {
-    inputs: proofs.map((p) => asInput(p, JSON.stringify({ signatures: [bytesToHex(schnorr.sign(sha256(utf8(p.secret)), traderKey))] }))),
-    outputs: outputsBody(outs),
-  });
-  let collected = 0;
-  if (collect.status === 200) {
-    const fresh = (collect.json.signatures as BlindSig[]).map((sig, n) => unblind(sig, outs[n]!, ks.keys[String(outs[n]!.amount)]!));
-    collected = fresh.reduce((n, p) => n + p.amount, 0);
+  // The app's collect (src/wallet/collect.ts): signed swap into fresh proofs, still locked to the trader.
+  let collected: Awaited<ReturnType<typeof collect>> | null = null;
+  try {
+    collected = await collect(new MintApi(MINT), proofs, trader, trusted.keysets, ks);
+  } catch (err) {
+    record('trader collects the full price with their signature', false, describe(err));
   }
-  record(
-    'trader collects the full price with their signature',
-    collect.status === 200 && collected === paid - fee && collected >= PRICE_SATS,
-    `${collected} sats for a ${PRICE_SATS} sat price${fee ? `, mint fee ${fee}` : ''}${collect.status !== 200 ? `; mint said ${collect.status} ${JSON.stringify(collect.json)}` : ''}`,
-  );
+  if (collected) {
+    const got = sumAmounts(collected.proofs);
+    record(
+      'trader collects the full price with their signature',
+      got === paid - fee && got >= PRICE_SATS,
+      `${got} sats for a ${PRICE_SATS} sat price${fee ? `, mint fee ${fee}` : ''}`,
+    );
+  }
 
   const after = await api('/v1/checkstate', { Ys: ys });
   record('the receipt is now spent at the mint', (after.json.states as any[]).every((s) => s.state === 'SPENT'));
+
+  // 8. Cash out (src/wallet/collect.ts): pay a Lightning invoice from the
+  //    collected money. The test mint settles its own invoices with fake sats.
+  if (collected) {
+    const invoice = await new MintApi(MINT).createMintQuote(CASH_OUT_SATS);
+    try {
+      const out = await cashOut(new MintApi(MINT), collected.proofs, trader, trusted.keysets, ks, invoice.request);
+      const back = sumAmounts(out.change);
+      info.cashOut = { paidSats: out.paidSats, feeSats: out.feeSats, changeSats: back, state: out.state };
+      record(
+        'trader cashes out to a Lightning invoice and keeps the change',
+        out.state === 'PAID' && out.paidSats === CASH_OUT_SATS && out.paidSats + out.feeSats + back === sumAmounts(collected.proofs),
+        `${out.paidSats} sats paid, ${out.feeSats} sat fees, ${back} sats change, ${out.state}`,
+      );
+    } catch (err) {
+      record('trader cashes out to a Lightning invoice and keeps the change', false, describe(err));
+    }
+  }
 }
 
 let crashed: unknown = null;

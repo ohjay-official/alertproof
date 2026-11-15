@@ -7,7 +7,8 @@
  * Works offline: decoding needs the full keyset ids (from the trader's cache)
  * to expand the short ids that cashuB carries.
  */
-import { getDecodedToken } from '@cashu/cashu-ts';
+import { getDecodedToken, getEncodedToken } from '@cashu/cashu-ts';
+import type { Proof } from '../verify/types.ts';
 
 export const MAX_RECEIPT_CHARS = 20_000;
 const CASHU_B = /^cashuB[A-Za-z0-9_-]+={0,2}$/;
@@ -56,4 +57,9 @@ export function decodeReceipt(text: unknown, keysetIds: readonly string[]): Deco
       })),
     },
   };
+}
+
+/** The receipt as text for the QR: cashuB with every DLEQ proof kept, so the trader can check it offline. */
+export function encodeReceipt(token: { mint: string; unit?: string; proofs: Proof[] }): string {
+  return getEncodedToken({ mint: token.mint, unit: token.unit ?? 'sat', proofs: token.proofs } as any);
 }

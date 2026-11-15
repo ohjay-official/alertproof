@@ -1,0 +1,93 @@
+name: static
+
+# Static analysis (security pass by a different method than the tests):
+# CodeQL's security-and-quality queries over all JavaScript and TypeScript,
+# and npm audit over the installed packages. Results go to the
+# static-results branch as SARIF and plain text, so a session can read them
+# without the GitHub UI.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/**
+      - scripts/**
+      - web/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/static.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  security-events: write
+  actions: read
+
+concurrency:
+  group: static
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: npm audit
+        continue-on-error: true
+        run: |
+          mkdir -p static-out
+          npm ci --no-audit --no-fund > /dev/null 2>&1
+          npm audit --json > static-out/npm-audit.json 2>&1 || true
+          npm audit > static-out/npm-audit.txt 2>&1 || true
+          tail -5 static-out/npm-audit.txt
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-and-quality
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript
+          upload: never
+          output: static-out/codeql
+
+      - name: Summarize
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const dir = "static-out/codeql";
+            const lines = [];
+            for (const f of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
+              if (!f.endsWith(".sarif")) continue;
+              const sarif = JSON.parse(fs.readFileSync(dir + "/" + f, "utf8"));
+              for (const run of sarif.runs || []) {
+                for (const r of run.results || []) {
+                  const loc = r.locations?.[0]?.physicalLocation;
+                  lines.push(`${r.level || "warning"}  ${r.ruleId}  ${loc?.artifactLocation?.uri}:${loc?.region?.startLine}  ${r.message?.text?.split("\n")[0]}`);
+                }
+              }
+            }
+            fs.writeFileSync("static-out/codeql.txt", (lines.length ? lines.join("\n") : "no findings") + "\n");
+            console.log(lines.length + " CodeQL findings");
+          '
+          cat static-out/codeql.txt
+
+      - name: Publish to the static-results branch
+        if: always()
+        run: |
+          cd static-out
+          echo "{\"commit\":\"${GITHUB_SHA}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
+          git init -q && git checkout -q -b static-results
+          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git add -A && git commit -q -m "static ${GITHUB_SHA}"
+          for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" static-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done

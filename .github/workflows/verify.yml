@@ -67,10 +67,21 @@ jobs:
       - name: Probe the test mints
         continue-on-error: true
         run: |
-          for m in https://nofees.testnut.cashu.space https://testnut.cashu.space; do
-            echo "== $m"
-            curl -sS -m 20 -w '\nHTTP %{http_code} in %{time_total}s\n' "$m/v1/info" 2>&1 | tail -c 600
-          done | tee ci-out/probe.log
+          {
+            for m in https://nofees.testnut.cashu.space https://testnut.cashu.space; do
+              echo "== $m"
+              curl -sS -m 20 -w '\nHTTP %{http_code} in %{time_total}s\n' "$m/v1/info" 2>&1 | tail -c 600
+            done
+            # The pay page calls the mint and the price API from the browser, so both need CORS.
+            O='https://alertproof.vercel.app'
+            echo "== CORS: testnut GET"
+            curl -sS -m 20 -D - -o /dev/null -H "Origin: $O" https://testnut.cashu.space/v1/keysets 2>&1 | grep -i '^HTTP\|access-control'
+            echo "== CORS: testnut POST preflight"
+            curl -sS -m 20 -D - -o /dev/null -X OPTIONS -H "Origin: $O" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' https://testnut.cashu.space/v1/swap 2>&1 | grep -i '^HTTP\|access-control'
+            echo "== price API (CoinGecko)"
+            curl -sS -m 20 -D - -H "Origin: $O" 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=ngn,eur' 2>&1 | grep -i '^HTTP\|access-control\|bitcoin'
+            echo
+          } | tee ci-out/probe.log
 
       - name: Go/No-Go on the test mint
         id: gonogo
