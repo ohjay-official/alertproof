@@ -88,6 +88,6 @@ jobs:
           cd static-out
           echo "{\"commit\":\"${GITHUB_SHA}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
           git init -q && git checkout -q -b static-results
-          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git config user.name "sealpay-ci" && git config user.email "actions@users.noreply.github.com"
           git add -A && git commit -q -m "static ${GITHUB_SHA}"
           for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" static-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done

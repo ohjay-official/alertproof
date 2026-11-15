@@ -3,7 +3,7 @@
  * sticker). Everything is in the part after "#", which browsers never send
  * to a server.
  *
- *   https://alertproof.vercel.app/pay#k=<key>&m=<mint>&s=<shop>&a=<sats>&f=<fiat>&c=NGN&h=<keyset>
+ *   https://sealpay.vercel.app/pay#k=<key>&m=<mint>&s=<shop>&a=<sats>&f=<fiat>&c=NGN&h=<keyset>
  *
  *   k  trader's lock key (compressed, hex)      required
  *   m  mint URL (https)                          required

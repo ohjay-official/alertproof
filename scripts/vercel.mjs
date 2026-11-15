@@ -1,5 +1,5 @@
 // @ts-check
-// Sets up AlertProof's Vercel project through Vercel's REST API, for
+// Sets up Sealpay's Vercel project through Vercel's REST API, for
 // .github/workflows/web.yml (adapted from Contri). Needs VERCEL_TOKEN; never
 // prints a secret. Run from the web/ folder.
 //
@@ -11,7 +11,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 
 const API = 'https://api.vercel.com';
 const TOKEN = process.env.VERCEL_TOKEN ?? '';
-const PROJECT = process.env.PROJECT ?? 'alertproof';
+const PROJECT = process.env.PROJECT ?? 'sealpay';
 if (!TOKEN) throw new Error('VERCEL_TOKEN is not set');
 
 /** The team the token is scoped to; every API call names it. */

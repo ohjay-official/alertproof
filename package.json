@@ -1,5 +1,5 @@
 {
-  "name": "alertproof",
+  "name": "sealpay",
   "version": "0.1.0",
   "private": true,
   "description": "Payments a fake alert can't fake: traders confirm Cashu ecash payments offline in one scan.",

@@ -73,7 +73,7 @@ jobs:
               curl -sS -m 20 -w '\nHTTP %{http_code} in %{time_total}s\n' "$m/v1/info" 2>&1 | tail -c 600
             done
             # The pay page calls the mint and the price API from the browser, so both need CORS.
-            O='https://alertproof.vercel.app'
+            O='https://sealpay.vercel.app'
             echo "== CORS: testnut GET"
             curl -sS -m 20 -D - -o /dev/null -H "Origin: $O" https://testnut.cashu.space/v1/keysets 2>&1 | grep -i '^HTTP\|access-control'
             echo "== CORS: testnut POST preflight"
@@ -101,7 +101,7 @@ jobs:
           echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
           cat status.json
           git init -q && git checkout -q -b verify-results
-          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git config user.name "sealpay-ci" && git config user.email "actions@users.noreply.github.com"
           git add -A && git commit -q -m "verify ${GITHUB_SHA}"
           # GitHub sometimes answers a push with a server error; try again.
           for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" verify-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done

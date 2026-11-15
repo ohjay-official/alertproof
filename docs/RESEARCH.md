@@ -33,11 +33,11 @@
 
 Four savings circles, three shop payment apps, remittances (SatsFlow), scam-warning wallet (Zafy), aid vouchers, AI payment copilots, paid AI inference, and five generic AI projects from one entrant.
 
-## Prior Art For The Chosen Idea (AlertProof)
+## Prior Art For The Chosen Idea (Sealpay)
 
-Name: AlertProof (working name was Dëgg, dropped for a name anyone gets at once). "Proof" alone was too generic and Konfam is taken by a Nigerian product.
+Name: Sealpay (working name was Dëgg, dropped for a name anyone gets at once). "Proof" alone was too generic and Konfam is taken by a Nigerian product.
 
-- **Numo** (github.com/cashubtc/numo, by the Cashu team): Android point-of-sale app. The merchant types an amount and the phone emulates an NFC tag holding a Cashu payment request; the payer's wallet writes a token back. Also Lightning invoices, Nostr payments, auto-withdraw to a Lightning address after a threshold, item catalogs. Its merchant must be online: its offline screen says new charges can't start until the phone is back online, and a payment made while offline is confirmed once back online. The code redeems tokens online and does no DLEQ check. So it is the mirror image of AlertProof (customer offline vs trader offline). Lessons to take: plan for flaky shop Wi-Fi, keep onboarding short, confirm results with haptics, auto-withdraw so little sits at the mint. Phone-to-phone tap needs a native app with card emulation, which is why AlertProof uses a written NFC sticker instead.
+- **Numo** (github.com/cashubtc/numo, by the Cashu team): Android point-of-sale app. The merchant types an amount and the phone emulates an NFC tag holding a Cashu payment request; the payer's wallet writes a token back. Also Lightning invoices, Nostr payments, auto-withdraw to a Lightning address after a threshold, item catalogs. Its merchant must be online: its offline screen says new charges can't start until the phone is back online, and a payment made while offline is confirmed once back online. The code redeems tokens online and does no DLEQ check. So it is the mirror image of Sealpay (customer offline vs trader offline). Lessons to take: plan for flaky shop Wi-Fi, keep onboarding short, confirm results with haptics, auto-withdraw so little sits at the mint. Phone-to-phone tap needs a native app with card emulation, which is why Sealpay uses a written NFC sticker instead.
 - Offline receive of Cashu ecash is a live topic: cashu-ts kept the DLEQ on offline sends (PR #1383, Nov 7, 2026); CDK issue #1927 asks for offline receive; cashu-vpn verifies P2PK-locked proofs offline against cached mint keys; Cashu Card does offline NFC payments.
 - Nobody in this year's field lets a trader with no data confirm a real payment. Fake credit alerts are a widely reported problem for Nigerian traders and POS agents.
 - Lightning can't pay an offline receiver yet (async payments, bolts#1149, still open).

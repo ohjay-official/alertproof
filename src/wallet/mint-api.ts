@@ -1,5 +1,5 @@
 /**
- * The few mint calls AlertProof makes, over the mint's plain REST API
+ * The few mint calls Sealpay makes, over the mint's plain REST API
  * (NUT-03 swap, NUT-04 mint, NUT-05 melt, NUT-07 check state, NUT-09 restore).
  * Every response is read defensively: amounts as whole numbers (some mints
  * send them as decimal strings), states normalized, errors carried with the

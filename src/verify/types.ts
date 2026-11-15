@@ -1,5 +1,5 @@
 /**
- * Types for the AlertProof offline receipt check.
+ * Types for the Sealpay offline receipt check.
  *
  * Everything the trader's phone needs is cached while it is online once
  * (mint info, keysets, the trader's public key). The check itself makes no

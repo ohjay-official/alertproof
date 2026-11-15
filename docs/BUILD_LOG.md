@@ -4,7 +4,7 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 
 ## Nov 11, 2026
 
-- Researched the event, judges, last year's winners and this year's field; chose AlertProof. Plan and research pushed as docs/SPEC.md and docs/RESEARCH.md.
+- Researched the event, judges, last year's winners and this year's field; chose Sealpay. Plan and research pushed as docs/SPEC.md and docs/RESEARCH.md.
 - Offline verifier rule layer (src/verify): strict secret parser, lock rules (only P2PK to the trader with no locktime, refund, extra keys or unknown tags), trusted mint and keyset checks, DLEQ through injected curve operations, signatures before amount, atomic replay store.
 - 58 rule-layer tests: every refusal, parser differential cases (duplicate keys, escapes, non-ASCII), 3,000-run seeded fuzzing of genuine receipts and of locks. Each rule was broken on purpose once to confirm a test catches it (20 of 20 caught after one test was added).
 - Curve layer on @noble/curves with the official Cashu NUT-00 and NUT-12 test vectors.
@@ -28,3 +28,7 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 - Static analysis pass: CodeQL and npm audit in CI; 0 vulnerabilities, nothing to change in shipped code (docs/SECURITY.md).
 - CI confirmed the test mint and the price API both accept calls from a browser page, so the app needs no server.
 - Mockup of the six main screens for review ([docs/design](design)).
+
+## Nov 16, 2026
+
+- Renamed the product from AlertProof to Sealpay across the code, docs and site.

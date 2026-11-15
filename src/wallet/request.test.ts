@@ -13,8 +13,8 @@ const base: PayLink = {
 };
 
 test('a pay link round-trips through its URL', () => {
-  const url = payLinkUrl('https://alertproof.vercel.app/', base);
-  assert.ok(url.startsWith('https://alertproof.vercel.app/pay#k='));
+  const url = payLinkUrl('https://sealpay.vercel.app/', base);
+  assert.ok(url.startsWith('https://sealpay.vercel.app/pay#k='));
   const r = parsePayLink(url);
   assert.equal(r.ok, true);
   if (r.ok) assert.deepEqual(r.link, base);
@@ -31,7 +31,7 @@ test('the sticker link has no amount and still parses', () => {
 });
 
 test('the link is short enough for an easy QR', () => {
-  const url = payLinkUrl('https://alertproof.vercel.app', base);
+  const url = payLinkUrl('https://sealpay.vercel.app', base);
   assert.ok(url.length < 260, `${url.length} characters`);
 });
 

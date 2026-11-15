@@ -17,7 +17,7 @@ import { keyPairFromScalar, randomBytes, type KeyPair } from './ecash.ts';
 
 export const SEED_BYTES = 16;
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const DOMAIN = new TextEncoder().encode('AlertProof trader key v1');
+const DOMAIN = new TextEncoder().encode('Sealpay trader key v1');
 
 export function newSeed(): Uint8Array {
   return randomBytes(SEED_BYTES);

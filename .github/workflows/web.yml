@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PROJECT: alertproof
+  PROJECT: sealpay
   # Only whether the secret is set, never its value.
   HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
 
@@ -103,6 +103,6 @@ jobs:
         run: |
           cd web-out
           git init -q && git checkout -q -b web-results
-          git config user.name "alertproof-ci" && git config user.email "actions@users.noreply.github.com"
+          git config user.name "sealpay-ci" && git config user.email "actions@users.noreply.github.com"
           git add -A && git commit -q -m "web ${GITHUB_SHA}"
           for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" web-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done

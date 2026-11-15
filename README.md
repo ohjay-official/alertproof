@@ -1,4 +1,4 @@
-# AlertProof
+# Sealpay
 
 **Payments a fake alert can't fake.** Traders confirm Bitcoin payments in one scan, even with no data.
 

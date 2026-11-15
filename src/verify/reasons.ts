@@ -20,7 +20,7 @@ export const REASON_EN: Record<FailCode, string> = {
   not_locked_to_you: "This money isn't locked to you.",
   can_be_taken_back: 'The payer could take this money back.',
   shared_lock: 'Someone else could also spend this money.',
-  unsupported_lock: "This receipt has conditions AlertProof doesn't accept.",
+  unsupported_lock: "This receipt has conditions Sealpay doesn't accept.",
   bad_signature: 'Not signed by your mint.',
   underpaid: 'Part paid. This part is kept; ask for the rest.',
   already_received: "Don't release goods for it again.",

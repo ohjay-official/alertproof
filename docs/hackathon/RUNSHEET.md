@@ -1,4 +1,4 @@
-# Runsheet: AlertProof at Dakar Bitcoin Hack 2026
+# Runsheet: Sealpay at Dakar Bitcoin Hack 2026
 
 Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). Update and push it before ending.
 
@@ -23,7 +23,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 
 ## Decisions
 
-- Nov 11: AlertProof chosen (Cashu ecash locked to the trader's key, checked offline with DLEQ). Name chosen for being clear to anyone.
+- Nov 11: Sealpay chosen (Cashu ecash locked to the trader's key, checked offline with DLEQ). Name chosen for being clear to anyone.
 - Nov 11: NFC sticker only after the core works. USSD and AI skipped.
 - Nov 11: Tests use Node's built-in runner with native TypeScript (zero dev dependencies for the rule layer); Vitest dropped from the stack.
 - Nov 11: Only one lock shape is accepted (P2PK to the trader, sigflag SIG_INPUTS or none). Secrets are read with a narrow parser so the phone and the mint can't read one secret two ways. Signatures are checked before the amount.
@@ -39,6 +39,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 - Nov 15: Pay link is `/pay#k=&m=&s=&a=&f=&c=&h=` (key, mint, shop, sats, fiat, currency, keyset hint), read strictly; the part after # never reaches a server.
 - Nov 15: Animated receipt QR uses its own small frame format (`AP1:n/total:check:part`, about 280 characters a frame); a short receipt stays one plain cashuB QR any Cashu wallet reads.
 - Nov 15: Per-sale lock keys (review #7's medium finding) deferred to next steps: screens, trader visits and the live link come first.
+- Nov 16: Renamed to Sealpay everywhere in the repo (no payments brand by that name found). Key derivation domain is now "Sealpay trader key v1" (no real keys existed yet). Repo rename on GitHub is his step.
 - Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
 
 ## CHECK IN (open)
@@ -52,12 +53,13 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 
 ## Gate log
 
-- Nov 11: confirmed solo entries are allowed; chose AlertProof; created the public repo ohjay-official/alertproof.
+- Nov 11: confirmed solo entries are allowed; chose the idea (then named AlertProof); created the public repo ohjay-official/alertproof.
 - Nov 15: said "continue the Dakar build" (resumed a day early).
+- Nov 16: renamed the product from AlertProof ("generic, sounds AI-made") to **Sealpay**: the mint seals the payment, locked to the trader, and the trader's phone checks the seal. Rejected: Gbam, Landed, Stamp, Touchstone, Till; wanted a made-up brand word from plain English.
 
 ## Session capabilities (Nov 15, session 3)
 
-- Push to GitHub: yes. Package installs: **blocked**. GitHub API: readable without a token (`curl https://api.github.com/repos/ohjay-official/alertproof/actions/runs`).
+- Push to GitHub: yes. Package installs: **blocked**. GitHub API: readable without a token (`curl https://api.github.com/repos/ohjay-official/sealpay/actions/runs`).
 - Local: Node 22.23, tsc, esbuild (/opt/npm-tools/node_modules/esbuild), Playwright 1.63 with Chrome (/usr/bin/google-chrome) for screenshots and browser tests of local pages, ffmpeg. Not local: @noble, @cashu, so anything with curve math is tested in CI.
 - CI is the laptop: `verify.yml` (types, tests, Go/No-Go, CORS and price probes) publishes to `verify-results`; `static.yml` (CodeQL, npm audit) to `static-results`; `web.yml` to `web-results`. These branches are force-pushed: fetch with a + refspec, e.g. `git fetch --depth 2 origin +verify-results:refs/remotes/origin/verify-results`.
 - Locally, `npm run test:pure` runs the 87 tests that need no packages.

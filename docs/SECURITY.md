@@ -1,12 +1,12 @@
 # Security
 
-AlertProof decides whether a trader releases goods, so the offline check is treated like money logic. This file records the threat model and every review and security pass, with what each found.
+Sealpay decides whether a trader releases goods, so the offline check is treated like money logic. This file records the threat model and every review and security pass, with what each found.
 
 ## What a green result promises
 
 The receipt was signed by the trader's chosen mint (NUT-12 DLEQ against the cached key for each amount), is locked so only the trader's key can spend it with no way back for the payer (NUT-10/NUT-11), was not accepted before on this phone, and covers the amount asked for. Details: [src/verify/README.md](../src/verify/README.md). Threat model: [docs/SPEC.md](SPEC.md#threat-model-first-draft).
 
-What it can't promise offline: that the mint stays honest and solvent (custodial ecash; the trader picks the mint and AlertProof sweeps to their own Lightning address when online), and, across two phones sharing one key, that a receipt wasn't accepted on the other phone.
+What it can't promise offline: that the mint stays honest and solvent (custodial ecash; the trader picks the mint and Sealpay sweeps to their own Lightning address when online), and, across two phones sharing one key, that a receipt wasn't accepted on the other phone.
 
 ## Passes so far
 
@@ -38,7 +38,7 @@ The seed behind the trader's key is stored encrypted with their PIN (PBKDF2-SHA2
 | Medium | Replay protection lasts only as long as the phone's storage; a phone restored from the recovery code can't tell an old receipt from a new one offline | Accepted for now, stated in src/verify/README.md: the app will request persistent storage and put the replay list in the backup. Per-sale lock keys (NUT-28 style blinding) are the stronger fix, listed as next steps |
 | Low | Fees weren't counted before green: dust proofs could leave the trader with less than the price | Fixed: the amount is what lands after the NUT-02 fee, the pay page adds the fee, dust proofs are refused. Test `review #5`, and the Go/No-Go now collects the full price |
 | Low | Proofs from a keyset past its `final_expiry` were green | Fixed: expiry cached and checked. Test `review #6` |
-| Low | A lock to the trader's x-coordinate with the other 02/03 prefix is refused though NUT-11 would let the trader spend it | Kept on purpose: AlertProof's pay page copies the key exactly, and one way to read a lock is safer. Documented in lock.ts |
+| Low | A lock to the trader's x-coordinate with the other 02/03 prefix is refused though NUT-11 would let the trader spend it | Kept on purpose: Sealpay's pay page copies the key exactly, and one way to read a lock is safer. Documented in lock.ts |
 | Low | SPEC said n_sigs above 1 is refused; the code refuses any n_sigs | SPEC aligned with the code (some mints reject n_sigs without pubkeys) |
 | Low | cashu-ts v4 hands back `Amount` objects and short keyset ids | Already handled by src/wallet/receipt.ts, which the Go/No-Go now uses |
 | Low | Nothing tested a lock made by cashu-ts's own `p2pk` option | The pay page will build the lock itself (the code the Go/No-Go runs, 16-byte nonce, no tags), so the tested path is the shipped path |

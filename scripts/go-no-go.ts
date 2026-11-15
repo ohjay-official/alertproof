@@ -1,5 +1,5 @@
 /**
- * Go/No-Go: AlertProof's core claim, end to end, on a real Cashu test mint
+ * Go/No-Go: Sealpay's core claim, end to end, on a real Cashu test mint
  * (fake sats, no real money).
  *
  *   node scripts/go-no-go.ts            (MINT_URL=... to use another test mint)
@@ -220,7 +220,7 @@ async function pickMint(): Promise<{ status: number; json: any }> {
 async function main(): Promise<void> {
   // 1. Trader setup, online once: mint info, keys, the trader's key.
   const mintInfo = await pickMint();
-  console.log(`AlertProof Go/No-Go on ${MINT}\n`);
+  console.log(`Sealpay Go/No-Go on ${MINT}\n`);
   const nuts = mintInfo.json?.nuts ?? {};
   info.mintVersion = mintInfo.json?.version;
   record(

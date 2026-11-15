@@ -21,7 +21,7 @@
  * The key must match the trader's key exactly (lowercase, compressed). This is
  * stricter than NUT-11, which compares keys by x-coordinate, so a lock to the
  * same x with the other 02/03 prefix would still be spendable by the trader.
- * Refusing it costs nothing (AlertProof's pay page copies the key exactly) and
+ * Refusing it costs nothing (Sealpay's pay page copies the key exactly) and
  * keeps one way to read a lock.
  */
 

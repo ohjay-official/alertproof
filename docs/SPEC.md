@@ -1,4 +1,4 @@
-# AlertProof: spec (Dakar Bitcoin Hack 2026)
+# Sealpay: spec (Dakar Bitcoin Hack 2026)
 
 **Payments a fake alert can't fake.** A trader confirms a Bitcoin payment in one scan, even with no data on their phone. The receipt is signed by the mint and locked to the trader's key, so it can't be faked, edited, reused or taken back.
 
@@ -23,14 +23,14 @@ Build windows: Nov 11 to 12 (core and Go/No-Go), Nov 16 to 19 (app, trader visit
 
 Lightning can't pay a receiver whose phone is offline (BOLT async payments are still an open proposal). Cashu ecash, backed by Lightning, can: proofs locked to the trader's key (NUT-11) carry the mint's signature proof (NUT-12 DLEQ), so a phone with no connection can check them against the mint's cached public keys. This is a live topic upstream (cashu-ts kept DLEQ on offline sends on Nov 7, 2026; CDK issue #1927 asks for offline receive), so the core is current and contributable.
 
-**Numo** (the Cashu team's Android point-of-sale app) is the closest product and the mirror image: its customer can be offline but its merchant must be online ("You can't start new charges until you're back online"), and it redeems tokens online instead of checking DLEQ. README line: **"Numo needs the trader online. AlertProof works when the trader isn't."** Credit Numo in the README.
+**Numo** (the Cashu team's Android point-of-sale app) is the closest product and the mirror image: its customer can be offline but its merchant must be online ("You can't start new charges until you're back online"), and it redeems tokens online instead of checking DLEQ. README line: **"Numo needs the trader online. Sealpay works when the trader isn't."** Credit Numo in the README.
 
 ## The problem and the users
 
 - **Primary user:** a market trader or kiosk owner with patchy data (fabric seller, phone accessories, food vendor). Nigeria first (fake credit alerts), Senegal and the rest of West Africa too (fake Wave and Orange Money screenshots). Pilot users: traders near the builder's school in Nigeria.
 - **Second user:** POS agents, who hand over cash against transfers and are a main target of fake alerts. Same check, same app.
 - **Today:** the customer pays by transfer or mobile money and shows a screen, or the trader waits for an SMS alert. Fake alert apps and edited screenshots cost traders their goods. On a bad network the real alert is late, so the trader either holds up the queue or trusts a screen.
-- **With AlertProof:** one scan, a green screen, the amount spoken out loud and a buzz in under a second, no data on the trader's phone. A copied, edited or reused receipt turns red.
+- **With Sealpay:** one scan, a green screen, the amount spoken out loud and a buzz in under a second, no data on the trader's phone. A copied, edited or reused receipt turns red.
 - **Reach estimate for the README:** source a real count of POS agents and informal traders (Nigeria, Senegal) before writing a number. No invented metrics.
 
 ## Talk to 5 real traders (before the UI is final)
@@ -41,8 +41,8 @@ Visit 5 traders or POS agents near school by Nov 17. Ask: how do you confirm a t
 
 - If the customer's phone has data at the moment of payment, the trader's phone needs none: the payment is signed by the mint and locked so that only the trader can spend it. The customer can't take it back.
 - If the trader's phone has data, it claims the payment on the spot.
-- If neither phone has data, AlertProof can tell the payment is real but not that it hasn't been spent elsewhere. This mode is off by default and capped when on.
-- The mint holds the bitcoin until the trader moves it out (custodial ecash). AlertProof sweeps to the trader's own Lightning address when online, so only the day's float sits at the mint.
+- If neither phone has data, Sealpay can tell the payment is real but not that it hasn't been spent elsewhere. This mode is off by default and capped when on.
+- The mint holds the bitcoin until the trader moves it out (custodial ecash). Sealpay sweeps to the trader's own Lightning address when online, so only the day's float sits at the mint.
 - The result shows only on the trader's own phone. Nothing the customer shows on their screen counts.
 
 ## Flows (one PWA, two roles)
@@ -60,7 +60,7 @@ Visit 5 traders or POS agents near school by Nov 17. Ask: how do you confirm a t
 
 An NFC sticker on the stall (NTAG215, 504 bytes; NTAG213 also fits) holds the link to the trader's pay page (shop name, key and mint, no amount), with the same link printed as a QR on the sticker. The customer taps their phone on it and the pay page opens; they type the amount the trader tells them. iPhones (XS and later) and most Androids open NFC links without an app.
 
-- Programmed once from AlertProof on Android Chrome with Web NFC ("Write my sticker"), then locked read-only. Web NFC is Android Chrome only, so iPhone traders use any NFC writer app or a pre-written sticker.
+- Programmed once from Sealpay on Android Chrome with Web NFC ("Write my sticker"), then locked read-only. Web NFC is Android Chrome only, so iPhone traders use any NFC writer app or a pre-written sticker.
 - Build only after the Go/No-Go passes and the core flows work. If time runs out, it goes in next steps.
 - Not built: phone-to-phone NFC. A web page can't act as a tag (that needs a native Android app with card emulation, which Numo already does), and the sticker gives the same tap.
 
@@ -123,7 +123,7 @@ Test mint with fake sats (testnut.cashu.space, which charges 100 ppk per proof; 
 4. 25 to 32 s: trader scans: green, the phone says "Paid, two thousand naira" and buzzes. "Checked with no internet."
 5. 32 to 42 s: same QR again: red "Already received". Edited receipt: red "Not signed by your mint".
 6. 42 to 52 s: data on: Collect, then paid out to the trader's Lightning address.
-7. 52 to 60 s: end card "AlertProof. Payments a fake alert can't fake." and the demo link.
+7. 52 to 60 s: end card "Sealpay. Payments a fake alert can't fake." and the demo link.
 
 The 3-minute pitch adds the problem with sourced numbers, what the 5 traders said, how it works (diagram), security, bandwidth numbers, the Numo comparison, and next steps (pilot traders, NFC sticker if not shipped, CFA and mobile-money cash-out, upstream contribution).
 
