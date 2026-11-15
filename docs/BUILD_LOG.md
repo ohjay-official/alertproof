@@ -15,3 +15,16 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 - Placeholder site (web/) and a Vercel deploy workflow adapted from Contri; it deploys once VERCEL_TOKEN is added.
 - Independent review by a separate agent: no false green for unsigned or take-back-able ecash; fixed its two high findings (replay vs "short by", part payments kept) and the rest (fees, keyset expiry, 512-char secrets, check order, wording). Recorded in docs/SECURITY.md.
 - Compact lock (16-byte nonce, no tags) cut the receipt from 2,896 to 2,368 characters. Go/No-Go: 20 of 20, 76 tests in CI.
+
+## Nov 15, 2026
+
+- Resumed after the Apart sprint. The app's money logic, all in src/wallet and tested before any screen:
+  - customer pays (pay.ts): an invoice for the price plus the mint's collect fee, then ecash locked to the trader, every DLEQ checked; a lost mint answer is recovered with NUT-09 restore, and finishing a payment twice gives the same receipt, not double money
+  - trader collects and cashes out (collect.ts): a signed swap into fresh proofs that stay locked to the trader, and a melt to a Lightning invoice with the change locked to the trader (NUT-08)
+  - the trader's key from a 16-byte seed, shown as a 28-character recovery code with a check (keys.ts), and kept encrypted with a PIN (pin-lock.ts)
+  - the pay link (request.ts), naira and CFA rates (rates.ts), and animated receipt QR frames (frames.ts)
+- An in-memory mint with real curve math and real lock enforcement, so the whole money path is tested without a network.
+- The Go/No-Go now runs the app's own pay, collect and cash-out code on testnut.cashu.space: 21 of 21, including a cash-out of 1,000 sats with 332 sats of change. 114 tests in CI.
+- Static analysis pass: CodeQL and npm audit in CI; 0 vulnerabilities, nothing to change in shipped code (docs/SECURITY.md).
+- CI confirmed the test mint and the price API both accept calls from a browser page, so the app needs no server.
+- Mockup of the six main screens for review ([docs/design](design)).

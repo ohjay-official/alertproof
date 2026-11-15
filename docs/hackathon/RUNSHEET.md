@@ -16,7 +16,8 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 | Nov 11 | Idea locked, repo, spec, research | done |
 | Nov 12 end | Core verifier solid, Go/No-Go passes on the test mint | **GO on Nov 11** (18/18 on testnut.cashu.space); review passes continue |
 | Nov 12 | Live URL (placeholder is fine) | site and workflow ready; deploys within 30 min of VERCEL_TOKEN being added (result on the web-results branch) |
-| Nov 16 to 19 | App, trader visits (5 by Nov 17), real-money proof, README, film | not started |
+| Nov 15 | App's money logic (pay, collect, cash out, keys, PIN, pay link, rates, QR frames) | **done**: 114 tests, Go/No-Go 21/21 on testnut running the app's own code |
+| Nov 16 to 19 | Screens, trader visits (5 by Nov 17), real-money proof, README, film | screens: mockup sent Nov 15, waiting for his OK on the look |
 | Nov 19 | Everything frozen except fixes | |
 | Nov 20 midday | Submit once | |
 
@@ -30,27 +31,39 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 - Nov 11: Test mint is testnut.cashu.space (cdk-mintd 0.18.1, 100 ppk fee per proof): nofees.testnut.cashu.space no longer resolves.
 - Nov 11: Go/No-Go passed. Measured: offline check 48 ms (CI runner), 1,333 sats = 6 proofs = 2,896 cashuB characters, trader cache 5.4 KB. That receipt is too dense for one QR on a cheap camera, so the receipt QR must be animated, and the customer page should keep receipts small (short nonce, no sigflag tag, which defaults to SIG_INPUTS).
 - Nov 11: Pinned versions from CI's lockfile: @cashu/cashu-ts 4.13.1, @noble/curves 2.4.0, @noble/hashes 2.4.0, typescript 6.0.3. cashu-ts v4 decodes amounts as `Amount` objects and `getDecodedToken` needs the full keyset ids to expand short ones.
+- Nov 11: Independent review done, findings fixed or accepted (docs/SECURITY.md). Genuine part payments are kept. The pay page builds the lock itself (16-byte nonce, no tags) rather than through cashu-ts's p2pk option, so the tested path is the shipped path; receipt now 2,368 characters for 6 proofs. Go/No-Go 20/20.
+- Nov 15: Wallet logic talks to the mint's plain REST API with blinding on @noble/curves (src/wallet), not cashu-ts's Wallet class, so the code the Go/No-Go runs on testnut is the code the app ships. cashu-ts is only used to encode and decode cashuB.
+- Nov 15: Collect swaps received proofs into fresh proofs that stay locked to the trader, so a stolen phone without the PIN can't spend them. Cash out melts to a Lightning invoice with change locked to the trader (NUT-08). A lost mint answer is recovered with NUT-09 restore.
+- Nov 15: Recovery code is the 16-byte seed as 28 characters (Crockford base32, groups of four, 2-character check). The 12-word form waits for Advanced.
+- Nov 15: Rates from CoinGecko (BTC in NGN and EUR); CFA from the euro peg (655.957 XOF per EUR). CI confirmed testnut and CoinGecko both allow browser calls (CORS `*`), so no server is needed. Rate on Nov 15: 1 BTC = ₦87.26M, so ₦2,000 is about 2,292 sats: the film and README must use the live rate, not the old 1,333 sat example.
+- Nov 15: Pay link is `/pay#k=&m=&s=&a=&f=&c=&h=` (key, mint, shop, sats, fiat, currency, keyset hint), read strictly; the part after # never reaches a server.
+- Nov 15: Animated receipt QR uses its own small frame format (`AP1:n/total:check:part`, about 280 characters a frame); a short receipt stays one plain cashuB QR any Cashu wallet reads.
+- Nov 15: Per-sale lock keys (review #7's medium finding) deferred to next steps: screens, trader visits and the live link come first.
+- Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
+
+## CHECK IN (open)
+
+- Nov 15: mockup of the six main screens sent (POS-style keypad, full-screen green/red verdict with a "Paid" stamp, no web fonts; [docs/design](../design)). Waiting for his reaction before building the UI.
 
 ## HIS CALL (open)
 
-- Add `VERCEL_TOKEN` to this repo's GitHub secrets for the live URL (steps in the session summary; never paste it in chat).
+- Add `VERCEL_TOKEN` to this repo's GitHub secrets for the live URL (asked again Nov 15 with steps; never paste it in chat). Still not set at 20:39 Lagos, Nov 15. Blocks the live link for the trader visits.
 - Optional: allow package installs in Claude's network settings, so future chats can run everything locally too.
 
 ## Gate log
 
 - Nov 11: confirmed solo entries are allowed; chose AlertProof; created the public repo ohjay-official/alertproof.
+- Nov 15: said "continue the Dakar build" (resumed a day early).
 
-## Session capabilities (Nov 11, session 2)
+## Session capabilities (Nov 15, session 3)
 
-- Push to GitHub: yes. Package installs: **blocked**. Test mint from the workspace: **blocked**. GitHub CLI: no valid token.
-- So CI is the laptop: `.github/workflows/verify.yml` installs, runs types, tests, curve vectors and the Go/No-Go, and publishes logs to the `verify-results` branch. Read them with `git fetch origin verify-results`.
-- Locally, `npm run test:rules` runs the rule layer with plain Node.
-
-- Nov 11: Independent review done, findings fixed or accepted (docs/SECURITY.md). Genuine part payments are kept. The pay page builds the lock itself (16-byte nonce, no tags) rather than through cashu-ts's p2pk option, so the tested path is the shipped path; receipt now 2,368 characters for 6 proofs. Go/No-Go 20/20.
+- Push to GitHub: yes. Package installs: **blocked**. GitHub API: readable without a token (`curl https://api.github.com/repos/ohjay-official/alertproof/actions/runs`).
+- Local: Node 22.23, tsc, esbuild (/opt/npm-tools/node_modules/esbuild), Playwright 1.63 with Chrome (/usr/bin/google-chrome) for screenshots and browser tests of local pages, ffmpeg. Not local: @noble, @cashu, so anything with curve math is tested in CI.
+- CI is the laptop: `verify.yml` (types, tests, Go/No-Go, CORS and price probes) publishes to `verify-results`; `static.yml` (CodeQL, npm audit) to `static-results`; `web.yml` to `web-results`. These branches are force-pushed: fetch with a + refspec, e.g. `git fetch --depth 2 origin +verify-results:refs/remotes/origin/verify-results`.
+- Locally, `npm run test:pure` runs the 87 tests that need no packages.
 
 ## Next step
 
-Paused on Nov 11 after the core went GO, for the Apart sprint (Nov 13 to 15). Resume Nov 16 with:
-
-1. Static analysis pass, then per-sale lock keys (review #7's medium finding on restored phones) if they fit the time.
-2. Build order step 2, continued: the customer pay page (Lightning invoice from a mint quote, then ecash minted locked to the trader with small receipts), the trader screens, IndexedDB replay store, then the animated receipt QR. Decode and mint cache modules are done.
+1. Get his reaction to the screen mockup (CHECK IN) and the VERCEL_TOKEN (HIS CALL).
+2. Then the app shell: esbuild in CI, `web/src`, CSP opened only to the trusted mints and the price API. Trader: setup (shop, mint, key, recovery code, PIN), ask (keypad, rate), pay code QR, scan (BarcodeDetector, lazy fallback for iPhone), verdict screen (voice, buzz), IndexedDB store, collect and cash out. Customer: pay page with the invoice, then the animated receipt QR. Demo mode on testnut for judges.
+3. Playwright in CI: the whole flow in a real browser against testnut, with the trader's network switched off; screenshots to the results branch.

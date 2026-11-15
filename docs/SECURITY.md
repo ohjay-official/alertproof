@@ -19,8 +19,14 @@ What it can't promise offline: that the mint stays honest and solvent (custodial
 | 5 | Nov 11 | Real-mint end to end | Go/No-Go on testnut.cashu.space (cdk-mintd 0.18.1): offline green with the network off, replay, relabelled mint, edited amount, attacker-mint signatures, wrong lock, real refund-path token; online, the mint refuses the customer's spends and accepts the trader's; after review #7, part payments and the fee too | 20 of 20 |
 | 6 | Nov 11 | Curve math | Official Cashu vectors: NUT-00 hash_to_curve, NUT-12 hash_e, BlindSignature and Proof DLEQ; tampered and invalid inputs | pass; invalid inputs return false, never throw |
 | 7 | Nov 11 | Independent review | A fresh reviewer (a separate Claude agent that didn't write the code) read the rule layer, curve layer and Go/No-Go looking for false greens, lost money and hangs, and probed each finding with scratch inputs | no false green for ecash the mint didn't sign or the payer could take back; 2 high, 2 medium and several low findings around replays, part payments and mint limits, below |
+| 8 | Nov 15 | Static analysis | CodeQL's security-and-quality queries over all JavaScript and TypeScript, and npm audit, in CI ([static.yml](../.github/workflows/static.yml), results on the static-results branch) | npm audit: 0 vulnerabilities. CodeQL: 11 warnings, no errors. 9 are one false positive (CodeQL reads the bigint constant `N` as undefined); 2 are in test and CI-only code (the in-memory test mint sends error text back; the Go/No-Go writes its report from the mint's answers). Nothing to change in shipped code |
+| 9 | Nov 15 | Wallet flows end to end | An in-memory mint with real curve math, real P2PK enforcement and input fees ([src/wallet/test/memory-mint.ts](../src/wallet/test/memory-mint.ts)): pay, a lost answer recovered with NUT-09 restore, finishing a payment twice, a mint with a bad DLEQ, the customer trying to take the money back, collect, cash out with change, an invoice bigger than the balance | 13 flow tests pass (114 in all). The Go/No-Go now runs the same pay, collect and cash-out code on testnut.cashu.space: 21 of 21 |
 
-Still to come: static analysis, a second independent review after the app exists, and the privacy pass (no personal data, no cookies, no third-party scripts).
+Still to come: a second independent review after the app exists, and the privacy pass (no personal data, no cookies, no third-party scripts).
+
+## The trader's PIN, plainly
+
+The seed behind the trader's key is stored encrypted with their PIN (PBKDF2-SHA256 with 600,000 rounds, then AES-GCM; [src/wallet/pin-lock.ts](../src/wallet/pin-lock.ts)). Checking a receipt needs only the public key, so the PIN is asked when collecting or cashing out, never at the till. It stops someone who picks up the phone from collecting or cashing out. It doesn't stop a lab that copies the phone's storage and tries every PIN. The real protection is collecting often (collected money stays locked to the trader's key) and the recovery code on paper.
 
 ## Review #7 findings and what was done
 

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AlertProof screens, first look</title>
+<style>
+  :root {
+    --ink: #10231c;
+    --muted: #4d5f57;
+    --ground: #eef1ee;
+    --surface: #ffffff;
+    --brand: #0f3d2e;
+    --paid: #0a7a44;
+    --stop: #b42318;
+    --part: #f0b429;
+    --line: #cfd8d2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #d9dfdb;
+    font: 18px/1.45 system-ui, Roboto, "Segoe UI", sans-serif;
+    color: var(--ink);
+  }
+  .row { display: flex; gap: 28px; padding: 28px; width: max-content; }
+  .phone {
+    width: 360px; height: 760px; border-radius: 28px; overflow: hidden;
+    background: var(--ground); display: flex; flex-direction: column;
+    box-shadow: 0 0 0 10px #1b2a24;
+    position: relative;
+  }
+  .cap { position: absolute; bottom: -2px; }
+  .bar { height: 26px; display: flex; justify-content: space-between; padding: 4px 18px 0; font-size: 13px; color: var(--muted); }
+  .top { padding: 10px 20px 0; }
+  .shop { font-weight: 700; font-size: 17px; margin: 0; }
+  .net { font-size: 14px; color: var(--muted); margin: 2px 0 0; }
+  .net b { color: var(--ink); font-weight: 600; }
+  .body { flex: 1; padding: 0 20px; display: flex; flex-direction: column; }
+  .amount { font-weight: 800; font-size: 64px; letter-spacing: -0.02em; line-height: 1; margin: 34px 0 8px; font-variant-numeric: tabular-nums; }
+  .sub { color: var(--muted); font-size: 16px; margin: 0; }
+  .keys { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-bottom: 12px; }
+  .keys span { background: var(--surface); border-radius: 10px; height: 58px; display: grid; place-items: center; font-size: 26px; font-weight: 600; border: 1px solid var(--line); }
+  .actions { padding: 12px 20px 22px; display: grid; gap: 10px; }
+  .btn { height: 56px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 18px; background: var(--brand); color: #fff; }
+  .btn.quiet { background: transparent; color: var(--brand); border: 2px solid var(--brand); }
+  .qr { background: var(--surface); border-radius: 14px; padding: 16px; margin: 18px auto 0; width: 288px; height: 288px; border: 1px solid var(--line); }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .small-amount { font-weight: 800; font-size: 40px; margin: 16px 0 0; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hint { font-size: 16px; color: var(--muted); margin: 14px 0 0; text-align: center; }
+  .frames { display: flex; gap: 5px; justify-content: center; margin-top: 12px; }
+  .frames i { width: 18px; height: 6px; border-radius: 3px; background: var(--line); }
+  .frames i.on { background: var(--brand); }
+  .waiting { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--muted); margin: 14px 0 0; justify-content: center; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--part); }
+
+  /* The verdict: the one loud screen. Full colour, a market receipt stamp. */
+  .verdict { color: #fff; }
+  .verdict.ok { background: var(--paid); }
+  .verdict.no { background: var(--stop); }
+  .verdict .bar { color: rgba(255,255,255,.8); }
+  .stamp {
+    margin: 64px 0 0 6px; align-self: flex-start;
+    border: 7px solid currentColor; border-radius: 16px;
+    padding: 2px 22px 8px; transform: rotate(-5deg);
+    font-weight: 900; font-size: 84px; line-height: 1; letter-spacing: -0.03em;
+  }
+  .no .stamp { font-size: 56px; }
+  .v-amount { font-weight: 800; font-size: 72px; line-height: 1; margin: 46px 0 10px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .v-line { font-size: 20px; margin: 0 0 6px; }
+  .v-note { font-size: 16px; opacity: .85; margin: 18px 0 0; }
+  .v-head { font-size: 30px; font-weight: 800; line-height: 1.15; margin: 42px 0 10px; }
+  .verdict .btn { background: #fff; color: var(--ink); }
+  .verdict .btn.quiet { background: transparent; color: #fff; border-color: #fff; }
+  .label { font: 600 15px/1.3 system-ui, sans-serif; color: #33443d; margin: 0 0 10px 6px; }
+</style>
+</head>
+<body>
+
+<div class="row" id="trader">
+  <div>
+    <p class="label">1. Trader types the price</p>
+    <div class="phone">
+      <div class="bar"><span>9:41</span><span>No data</span></div>
+      <div class="top">
+        <p class="shop">Mama Nkechi's Fabrics</p>
+        <p class="net"><b>Works with no data.</b> Rate saved 2 h ago</p>
+      </div>
+      <div class="body">
+        <p class="amount">₦2,000</p>
+        <p class="sub">1,334 sats</p>
+        <div class="keys">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>00</span><span>0</span><span>&#9003;</span>
+        </div>
+      </div>
+      <div class="actions"><div class="btn">Show pay code</div></div>
+    </div>
+  </div>
+  <div>
+    <p class="label">2. Customer scans the pay code</p>
+    <div class="phone">
+      <div class="bar"><span>9:41</span><span>No data</span></div>
+      <div class="top"><p class="shop">Mama Nkechi's Fabrics</p></div>
+      <div class="body">
+        <p class="small-amount">₦2,000</p>
+        <p class="sub">1,334 sats</p>
+        <div class="qr"><svg class="qrsvg" data-seed="7" viewBox="0 0 33 33"></svg></div>
+        <p class="hint">The customer scans this with their phone camera and pays.</p>
+      </div>
+      <div class="actions">
+        <div class="btn">Scan their receipt</div>
+        <div class="btn quiet">Change amount</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <p class="label">3. Trader scans the receipt: paid</p>
+    <div class="phone verdict ok">
+      <div class="bar"><span>9:42</span><span>No data</span></div>
+      <div class="body">
+        <div class="stamp">Paid</div>
+        <p class="v-amount">₦2,000</p>
+        <p class="v-line">1,334 sats, locked to you</p>
+        <p class="v-note">Checked on this phone with no internet. The phone says it out loud and buzzes.</p>
+      </div>
+      <div class="actions"><div class="btn">Next sale</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row" id="customer">
+  <div>
+    <p class="label">4. Customer's phone: pay</p>
+    <div class="phone">
+      <div class="bar"><span>9:41</span><span>4G</span></div>
+      <div class="top"><p class="shop">Pay Mama Nkechi's Fabrics</p></div>
+      <div class="body">
+        <p class="small-amount">₦2,000</p>
+        <p class="sub">1,334 sats, from any Lightning wallet</p>
+        <div class="qr"><svg class="qrsvg" data-seed="19" viewBox="0 0 33 33"></svg></div>
+        <p class="waiting"><span class="dot"></span>Waiting for your payment</p>
+      </div>
+      <div class="actions">
+        <div class="btn">Open my wallet</div>
+        <div class="btn quiet">Copy invoice</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <p class="label">5. Customer's phone: the receipt</p>
+    <div class="phone">
+      <div class="bar"><span>9:42</span><span>4G</span></div>
+      <div class="top"><p class="shop">Receipt for Mama Nkechi's Fabrics</p></div>
+      <div class="body">
+        <p class="small-amount">₦2,000</p>
+        <p class="sub">Show this to the trader</p>
+        <div class="qr"><svg class="qrsvg" data-seed="31" viewBox="0 0 33 33"></svg></div>
+        <div class="frames"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="hint">Hold steady. The code changes as it plays; the trader's phone picks up every part.</p>
+      </div>
+      <div class="actions"><p class="hint" style="margin:0 0 6px">Saved on this phone, so you have proof too.</p></div>
+    </div>
+  </div>
+  <div>
+    <p class="label">6. A fake or reused receipt: not paid</p>
+    <div class="phone verdict no">
+      <div class="bar"><span>9:43</span><span>No data</span></div>
+      <div class="body">
+        <div class="stamp">Not paid</div>
+        <p class="v-head">Don't release the goods.</p>
+        <p class="v-line">Not signed by your mint.</p>
+        <p class="v-note">Whatever the customer's screen says, this phone checked the receipt itself.</p>
+      </div>
+      <div class="actions">
+        <div class="btn">Scan again</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Placeholder codes for the mockup only (the app draws real ones).
+  function rng(seed) { let s = seed * 9301 + 49297; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+  for (const svg of document.querySelectorAll('.qrsvg')) {
+    const r = rng(Number(svg.dataset.seed));
+    const n = 33; let d = '';
+    const finder = (x, y) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      if (finder(x, y)) continue;
+      if (r() > 0.52) d += `M${x} ${y}h1v1h-1z`;
+    }
+    for (const [fx, fy] of [[0, 0], [n - 7, 0], [0, n - 7]]) {
+      d += `M${fx} ${fy}h7v7h-7zM${fx + 1} ${fy + 1}v5h5v-5zM${fx + 2} ${fy + 2}h3v3h-3z`;
+    }
+    svg.innerHTML = `<path fill="#10231c" fill-rule="evenodd" d="${d}"/>`;
+  }
+</script>
+</body>
+</html>
