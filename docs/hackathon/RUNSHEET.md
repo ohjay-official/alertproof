@@ -39,7 +39,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 - Nov 15: Pay link is `/pay#k=&m=&s=&a=&f=&c=&h=` (key, mint, shop, sats, fiat, currency, keyset hint), read strictly; the part after # never reaches a server.
 - Nov 15: Animated receipt QR uses its own small frame format (`AP1:n/total:check:part`, about 280 characters a frame); a short receipt stays one plain cashuB QR any Cashu wallet reads.
 - Nov 15: Per-sale lock keys (review #7's medium finding) deferred to next steps: screens, trader visits and the live link come first.
-- Nov 16: Renamed to Sealpay everywhere in the repo (no payments brand by that name found). Key derivation domain is now "Sealpay trader key v1" (no real keys existed yet). Repo rename on GitHub is his step.
+- Nov 16: Renamed to Sealpay everywhere in the repo (no payments brand by that name found). Key derivation domain is now "Sealpay trader key v1" (no real keys existed yet). Repo renamed to ohjay-official/sealpay by his agent (Rockbot) on Nov 16; old links redirect.
 - Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
 
 ## CHECK IN (open)
@@ -55,6 +55,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). U
 
 - Nov 11: confirmed solo entries are allowed; chose the idea (then named AlertProof); created the public repo ohjay-official/alertproof.
 - Nov 15: said "continue the Dakar build" (resumed a day early).
+- Nov 16: his agent renamed the repo to ohjay-official/sealpay (only the name changed; still public, main).
 - Nov 16: renamed the product from AlertProof ("generic, sounds AI-made") to **Sealpay**: the mint seals the payment, locked to the trader, and the trader's phone checks the seal. Rejected: Gbam, Landed, Stamp, Touchstone, Till; wanted a made-up brand word from plain English.
 
 ## Session capabilities (Nov 15, session 3)
