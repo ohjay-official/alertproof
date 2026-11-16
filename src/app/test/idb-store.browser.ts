@@ -3,11 +3,11 @@ const pay = (n: number) => ({ mint: 'https://m.example', totalSats: n, feeSats: 
 (window as any).run = async () => {
   const out: Record<string, unknown> = {};
   const s = new IdbStore(await openDb('t' + Math.random()));
-  s.context = { requestedSats: 1333, now: () => 1 };
-  out.first = await s.claim(['a', 'b'], pay(1334));
-  out.again = await s.claim(['b', 'c'], pay(1334));
-  out.fresh = await s.claim(['c'], pay(500));
-  const race = await Promise.all([s.claim(['x'], pay(1334)), s.claim(['x'], pay(1334))]);
+
+  out.first = await s.claim(['a', 'b'], pay(1334), { requestedSats: 1333, now: () => 1 });
+  out.again = await s.claim(['b', 'c'], pay(1334), { requestedSats: 1333, now: () => 1 });
+  out.fresh = await s.claim(['c'], pay(500), { requestedSats: 1333, now: () => 1 });
+  const race = await Promise.all([s.claim(['x'], pay(1334), { requestedSats: 1333, now: () => 1 }), s.claim(['x'], pay(1334), { requestedSats: 1333, now: () => 1 })]);
   out.race = race;
   const sales = await s.sales();
   out.sales = sales.map((x) => [x.totalSats, x.part, x.collected]);

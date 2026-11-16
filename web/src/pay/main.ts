@@ -27,40 +27,75 @@ interface Saved {
   paidAt?: number;
 }
 
-const KEY = 'sealpay:payment';
+const KEY = 'sealpay:payments';
+const OLD_KEY = 'sealpay:payment';
+const KEEP_MS = 7 * 24 * 3600 * 1000;
 
-function load(): Saved | null {
+/** Every payment on this phone, by quote. One with no receipt yet is never dropped. */
+function loadAll(): Saved[] {
   try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Saved) : null;
+    const list = JSON.parse(localStorage.getItem(KEY) ?? '[]') as Saved[];
+    const old = localStorage.getItem(OLD_KEY);
+    if (old) {
+      list.push(JSON.parse(old) as Saved);
+      localStorage.removeItem(OLD_KEY);
+    }
+    // Receipts are kept a week for disputes; unfinished payments until they finish.
+    return list.filter((x) => x?.pending?.quote && (!x.receipt || Date.now() - (x.paidAt ?? 0) < KEEP_MS));
   } catch {
-    return null;
+    return [];
   }
 }
 
 function save(s: Saved): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    const rest = loadAll().filter((x) => x.pending.quote !== s.pending.quote);
+    localStorage.setItem(KEY, JSON.stringify([...rest, s]));
   } catch {
     // storage full or blocked: the page still works while open
   }
 }
 
+function forget(quote: string): void {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(loadAll().filter((x) => x.pending.quote !== quote)));
+  } catch {
+    // fine
+  }
+}
+
+/** The newest unfinished payment, if any: it comes first, whatever link was opened. */
+const unfinished = () => loadAll().filter((x) => !x.receipt).sort((a, b) => b.pending.createdAt - a.pending.createdAt)[0];
+
 const price = (l: PayLink) => (l.fiat ? formatFiat(l.fiat.amount, l.fiat.currency) : sats(l.sats ?? 0));
 
 function start(): void {
   const parsed = parsePayLink(location.hash);
-  const saved = load();
+  // A payment that started but has no receipt yet always comes first, so paid sats are never lost.
+  const open = unfinished();
+  if (open) return invoice(open);
+  const latest = loadAll().filter((x) => x.receipt).sort((a, b) => (b.paidAt ?? 0) - (a.paidAt ?? 0))[0];
   if (!parsed.ok) {
-    if (saved?.receipt) return receipt(saved);
+    if (latest) return receipt(latest);
     return show(screen({ body: [h('h1', {}, 'Ask the trader to show their pay code again.'), note(parsed.error, 'error')] }));
   }
   const link = parsed.link;
-  // Coming back to the same payment: pick up where it was.
-  if (saved && saved.link.traderPubkey === link.traderPubkey && saved.link.sats === link.sats && saved.link.mint === link.mint) {
-    if (saved.receipt) return receipt(saved);
-    return invoice(saved);
+  // Just paid this same code: show that receipt, with a way to pay again.
+  if (latest && latest.link.traderPubkey === link.traderPubkey && latest.link.sats === link.sats && Date.now() - (latest.paidAt ?? 0) < 30 * 60_000) {
+    return receipt(latest);
   }
+  payScreen(link);
+}
+
+/** "Start a new payment" from a receipt: the same link, a fresh payment. */
+function newPayment(): void {
+  const parsed = parsePayLink(location.hash);
+  if (parsed.ok) payScreen(parsed.link);
+  else show(screen({ body: [h('h1', {}, 'Scan the trader’s code to pay again.')] }));
+}
+
+function payScreen(link: PayLink): void {
+  generation++;
   if (!MINTS.some((m) => normalizeMintUrl(m.url) === link.mint)) {
     return show(screen({ body: [h('h1', {}, "Sealpay doesn't support this trader's mint yet."), note(link.mint, 'error')] }));
   }
@@ -98,8 +133,11 @@ function start(): void {
 }
 
 let polling = 0;
+/** bumped whenever the screen changes, so an old poll never reschedules itself */
+let generation = 0;
 
 function invoice(s: Saved): void {
+  const mine = ++generation;
   const api = new MintApi(s.link.mint);
   const status = h('p', { class: 'waiting', 'aria-live': 'polite' }, h('span', { class: 'dot' }), 'Waiting for your payment');
   const copy = button('Copy invoice', () => {
@@ -121,13 +159,21 @@ function invoice(s: Saved): void {
     }),
   );
   window.clearTimeout(polling);
+  let expiredSince = 0;
   const tick = async () => {
+    if (mine !== generation) return;
     try {
       const state = await paymentState(api, s.pending);
+      if (mine !== generation) return;
       if (state === 'EXPIRED') {
-        localStorage.removeItem(KEY);
-        status.replaceWith(note('This invoice expired. Nothing was paid. Scan the trader’s code again.', 'error'));
-        return;
+        // Decided by the mint over several minutes, not by this phone's clock: a late payment still counts.
+        expiredSince ||= Date.now();
+        status.textContent = 'This invoice looks expired. Still checking in case your payment arrives late.';
+        if (Date.now() - expiredSince > 10 * 60_000) {
+          forget(s.pending.quote);
+          status.replaceWith(note('This invoice expired and nothing was paid. Scan the trader’s code again.', 'error'));
+          return;
+        }
       }
       if (state === 'PAID' || state === 'ISSUED') {
         status.textContent = 'Paid. Making your receipt…';
@@ -140,12 +186,13 @@ function invoice(s: Saved): void {
     } catch {
       // weak signal: try again
     }
-    polling = window.setTimeout(tick, 2500);
+    if (mine === generation) polling = window.setTimeout(tick, expiredSince ? 15_000 : 2500);
   };
   void tick();
 }
 
 function receipt(s: Saved): void {
+  generation++;
   const qr = animatedQr(s.receipt!, `Receipt for ${s.link.shop}`);
   show(
     screen({
@@ -161,8 +208,9 @@ function receipt(s: Saved): void {
         h('p', { class: 'hint' }, `Saved on this phone${s.paidAt ? `, paid ${new Date(s.paidAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : ''}. Keep it until the trader’s phone says Paid.`),
         button('Start a new payment', () => {
           qr.stop();
-          localStorage.removeItem(KEY);
-          start();
+          // Keep the receipt saved (for disputes); just move on.
+          history.replaceState(null, '', location.pathname + location.hash);
+          newPayment();
         }, 'quiet'),
       ],
     }),
@@ -172,6 +220,7 @@ function receipt(s: Saved): void {
 keepOffline();
 window.addEventListener('hashchange', () => {
   window.clearTimeout(polling);
+  generation++;
   start();
 });
 start();

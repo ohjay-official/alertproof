@@ -14,7 +14,8 @@ import type { Received } from './types.ts';
  * without it can't tell an old receipt from a new one while offline.
  */
 export interface SeenStore {
-  claim(ys: readonly string[], payment: Received): Promise<boolean>;
+  /** `ctx` is passed through for the app's own records (the price asked); the check never reads it. */
+  claim(ys: readonly string[], payment: Received, ctx?: unknown): Promise<boolean>;
 }
 
 /** In-memory store for tests and the demo. Check and insert run with no await between them. */

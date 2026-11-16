@@ -242,11 +242,12 @@ export async function acceptReceipt(
   opts: CheckOptions,
   curve: CurveOps,
   store: SeenStore,
+  claimContext?: unknown,
 ): Promise<Verdict> {
   const verdict = checkReceipt(token, ctx, opts, curve);
   const payment = verdict.ok ? verdict : verdict.code === 'underpaid' ? verdict.received : undefined;
   if (!payment) return verdict;
-  const fresh = await store.claim(payment.ys, payment);
+  const fresh = await store.claim(payment.ys, payment, claimContext);
   if (!fresh) return refuse('already_received', 'one or more proofs were already received on this phone');
   return verdict.ok ? verdict : { ...verdict, kept: true };
 }

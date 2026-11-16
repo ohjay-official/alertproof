@@ -208,6 +208,12 @@ export class MemoryMint {
       this.meltQuotes.set(quote, { amount, fee_reserve: this.feeReserve, state: 'UNPAID' });
       return { quote, amount, fee_reserve: this.feeReserve, state: 'UNPAID', expiry: null };
     }
+    const mlq = /^\/v1\/melt\/quote\/bolt11\/([0-9a-f]+)$/.exec(path);
+    if (method === 'GET' && mlq) {
+      const q = this.meltQuotes.get(mlq[1]!);
+      if (!q) throw new Refusal('quote not found', 20000);
+      return { quote: mlq[1], amount: q.amount, fee_reserve: q.fee_reserve, state: q.state, expiry: null };
+    }
     if (method === 'POST' && path === '/v1/melt/bolt11') {
       const q = this.meltQuotes.get(body.quote);
       if (!q) throw new Refusal('quote not found', 20000);

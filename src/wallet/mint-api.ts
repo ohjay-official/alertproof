@@ -48,6 +48,7 @@ type Input = { id: string; amount: number; secret: string; C: string; witness?: 
 type Output = { amount: number; id: string; B_: string };
 
 const TIMEOUT_MS = 20_000;
+const MELT_TIMEOUT_MS = 90_000;
 
 function wholeNumber(value: unknown, what: string): number {
   const n = typeof value === 'string' && /^[0-9]{1,16}$/.test(value) ? Number(value) : value;
@@ -94,10 +95,10 @@ export class MintApi {
     this.fetchFn = fetchFn;
   }
 
-  private async call(path: string, body?: unknown): Promise<any> {
+  private async call(path: string, body?: unknown, timeoutMs = TIMEOUT_MS): Promise<any> {
     const init: RequestInit = {
       headers: body === undefined ? { accept: 'application/json' } : { accept: 'application/json', 'content-type': 'application/json' },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     };
     if (body !== undefined) {
       init.method = 'POST';
@@ -171,8 +172,20 @@ export class MintApi {
     };
   }
 
+  async getMeltQuote(quote: string): Promise<MeltQuote> {
+    const j = await this.call(`/v1/melt/quote/bolt11/${encodeURIComponent(quote)}`);
+    return {
+      quote,
+      amount: wholeNumber(j.amount ?? 0, 'amount'),
+      fee_reserve: wholeNumber(j.fee_reserve ?? 0, 'fee reserve'),
+      state: meltState(j),
+      expiry: expiryOf(j.expiry),
+    };
+  }
+
+  /** Lightning payments can take a while: melt waits longer than other calls. */
   async melt(quote: string, inputs: Input[], outputs: Output[]): Promise<MeltResult> {
-    const j = await this.call('/v1/melt/bolt11', { quote, inputs, outputs });
+    const j = await this.call('/v1/melt/bolt11', { quote, inputs, outputs }, MELT_TIMEOUT_MS);
     return {
       state: meltState(j),
       preimage: typeof j.payment_preimage === 'string' ? j.payment_preimage : null,

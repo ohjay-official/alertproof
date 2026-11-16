@@ -19,7 +19,8 @@ import { fetchRates, fiatToSats, formatFiat, rateAge, satsToFiat, type Currency,
 import { FrameCollector } from '../../../src/wallet/frames.ts';
 import { MintApi } from '../../../src/wallet/mint-api.ts';
 import { finishPayment, paymentState, pickKeyset, startPayment } from '../../../src/wallet/pay.ts';
-import { cashOut, collect } from '../../../src/wallet/collect.ts';
+import { collect, planCashOut, planCollect, recoverOutputs, runCashOut, settleCashOut, type CollectPlan, type MeltPlan } from '../../../src/wallet/collect.ts';
+import { MintError } from '../../../src/wallet/mint-api.ts';
 import { sumAmounts } from '../../../src/wallet/ecash.ts';
 import { IdbStore, keepStorage, openDb, type Sale } from '../../../src/app/idb-store.ts';
 import { keepOffline } from '../shared/offline.ts';
@@ -41,7 +42,16 @@ interface Profile {
   rates: Rates | null;
   /** language of the verdict and the spoken result; older profiles have none (English) */
   lang?: Lang;
+  /** ids of the mint's active keysets, to collect into (older saved keysets stay for old receipts) */
+  activeIds?: string[];
+  /** restored from the recovery code only: receipts are confirmed online until a sync */
+  needsOnlineCheck?: boolean;
 }
+
+/** A step saved before it goes online, so a crash or a lost answer loses nothing. */
+type PendingOp =
+  | { kind: 'collect'; id: string; saleId: number; plan: CollectPlan; at: number }
+  | { kind: 'melt'; id: string; plan: MeltPlan; at: number };
 
 const DEMO_PIN = '1234';
 let store: IdbStore;
@@ -74,10 +84,19 @@ async function wallet(): Promise<Proof[]> {
   return (await store.get<Proof[]>('wallet')) ?? [];
 }
 
+async function pendingOps(): Promise<PendingOp[]> {
+  return (await store.get<PendingOp[]>('pending')) ?? [];
+}
+
+const isTestMint = (p: Profile) => p.mint.url === TEST_MINT;
+const collectInto = (p: Profile) => pickKeyset(p.mint.keysets.filter((k) => !p.activeIds || p.activeIds.includes(k.id)));
+const opId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
 function topBar(): HTMLElement[] {
   const p = profile!;
   return [
     h('div', { class: 'topline' }, h('p', { class: 'shop' }, p.shop), h('a', { href: '#sales', class: 'link' }, 'Sales')),
+    isTestMint(p) && !p.demo ? h('p', { class: 'test-bar' }, 'Test mint: fake sats, not real money.') : null,
     p.demo
       ? h(
           'p',
@@ -101,14 +120,54 @@ function topBar(): HTMLElement[] {
   ].filter(Boolean) as HTMLElement[];
 }
 
-/** Refresh rates and the mint's keys when online. Never blocks the till. */
+/** When online: refresh the rate and the mint's keys, and finish any step a crash left halfway. Never blocks the till. */
 async function refreshInBackground(): Promise<void> {
   if (!profile || networkOff || !navigator.onLine) return;
+  const p = profile;
   try {
-    profile.rates = await fetchRates();
-    await saveProfile(profile);
+    p.rates = await fetchRates();
   } catch {
     // keep the saved rate
+  }
+  try {
+    const fresh = await fetchTrustedMint(p.mint.url);
+    const known = new Set(p.mint.keysets.map((k) => k.id));
+    p.mint = { ...fresh, keysets: [...p.mint.keysets.filter((k) => !fresh.keysets.some((f) => f.id === k.id)), ...fresh.keysets] };
+    p.activeIds = fresh.keysets.map((k) => k.id);
+    if (fresh.keysets.some((k) => !known.has(k.id))) console.info('Sealpay: saved new mint keys');
+  } catch {
+    // keep the saved keys
+  }
+  await saveProfile(p);
+  await settlePending().catch(() => undefined);
+}
+
+/** Finish collects and cash-outs that were interrupted. */
+async function settlePending(): Promise<void> {
+  const p = profile!;
+  const api = new MintApi(p.mint.url);
+  for (const op of await pendingOps()) {
+    if (op.kind === 'collect') {
+      const ks = p.mint.keysets.find((k) => k.id === op.plan.outputs[0]?.id);
+      const back = ks ? await recoverOutputs(api, op.plan.outputs, ks) : null;
+      const rest = (await pendingOps()).filter((o) => o.id !== op.id);
+      if (back) {
+        await store.apply({ kv: { wallet: [...(await wallet()), ...back], pending: rest }, collected: [op.saleId] });
+        continue;
+      }
+      // The swap never reached the mint: forget the step, the sale can be collected again.
+      const sale = (await store.sales()).find((x) => x.id === op.saleId);
+      const states = sale ? await api.checkState(sale.ys) : [];
+      if (states.every((x) => x === 'UNSPENT')) await store.apply({ kv: { pending: rest } });
+      else if (states.every((x) => x === 'SPENT')) await store.apply({ kv: { pending: rest }, problems: { [op.saleId]: 'spent elsewhere' } });
+    } else {
+      const ks = p.mint.keysets.find((k) => k.id === op.plan.blanks[0]?.id) ?? collectInto(p);
+      const r = await settleCashOut(api, op.plan, ks, (x) => nobleCurve.hashToCurve(x));
+      if (r.state === 'PENDING') continue;
+      const rest = (await pendingOps()).filter((o) => o.id !== op.id);
+      const back = r.state === 'PAID' ? r.change : r.proofs;
+      await store.apply({ kv: { wallet: [...(await wallet()), ...back], pending: rest } });
+    }
   }
 }
 
@@ -130,7 +189,7 @@ function welcome(): void {
 function setupShop(restoreSeed?: Uint8Array): void {
   let currency: Currency = 'NGN';
   let lang: Lang = 'en';
-  let mintUrl = MINTS[0]!.url;
+  let mintUrl = '';
   const mintChoice = h(
     'div',
     { class: 'choice stack', role: 'radiogroup', 'aria-label': 'Mint' },
@@ -142,7 +201,10 @@ function setupShop(restoreSeed?: Uint8Array): void {
         onclick: (e: Event) => {
           mintUrl = m.url;
           for (const b of mintChoice.querySelectorAll('button')) b.setAttribute('aria-checked', String(b === e.currentTarget));
-          mintWarn.hidden = m.test;
+          mintWarn.textContent = m.test
+            ? 'Test mint: fake sats for trying Sealpay. Customers pay nothing real, so never hand over real goods on it.'
+            : 'Real money: the mint holds it until you cash out. Keep small amounts there and cash out often.';
+          mintWarn.hidden = false;
         },
       }, m.label),
     ),
@@ -190,10 +252,14 @@ function setupShop(restoreSeed?: Uint8Array): void {
         msg.replaceChildren(note('Type your shop name first.', 'error'));
         return;
       }
+      if (!mintUrl) {
+        msg.replaceChildren(note('Choose a mint: the test mint to try it out, or Minibits for real money.', 'error'));
+        return;
+      }
       try {
         const [mint, rates] = await Promise.all([fetchTrustedMint(mintUrl), fetchRates().catch(() => null)]);
         const seed = restoreSeed ?? newSeed();
-        if (restoreSeed) await choosePin(seed, { shop, currency, mint, rates, lang });
+        if (restoreSeed) await choosePin(seed, { shop, currency, mint, rates, lang }, true);
         else showCode(seed, { shop, currency, mint, rates, lang });
       } catch (err) {
         msg.replaceChildren(note(`${explain(err)} Setup needs data once.`, 'error'));
@@ -210,7 +276,7 @@ function setupShop(restoreSeed?: Uint8Array): void {
         money,
         h('p', { class: 'label' }, 'Language for Paid / Not paid'),
         langChoice,
-        h('p', { class: 'label' }, 'Mint (holds the money until you cash out)'),
+        h('p', { class: 'label' }, 'Mint (holds the money until you cash out). Choose one'),
         mintChoice,
         mintWarn,
         msg,
@@ -233,7 +299,7 @@ function showCode(seed: Uint8Array, d: Draft): void {
       top: [h('p', { class: 'shop' }, d.shop)],
       body: [
         h('h2', {}, 'Write this down.'),
-        h('p', {}, 'Your recovery code. With it you can get your money back on a new phone. Anyone who has it can take your money, so keep it safe and never share it.'),
+        h('p', {}, 'Your recovery code brings your shop key to a new phone, so payments made to you can still be collected. Money already collected lives on this phone: save a backup file from Sales too. Keep the code on paper and never share it.'),
         h('p', { class: 'code', 'aria-label': 'Recovery code' }, recoveryCode(seed)),
         h('label', { class: 'tick', for: 'wrote' }, check, ' I have written it down on paper'),
       ],
@@ -242,7 +308,7 @@ function showCode(seed: Uint8Array, d: Draft): void {
   );
 }
 
-async function choosePin(seed: Uint8Array, d: Draft): Promise<void> {
+async function choosePin(seed: Uint8Array, d: Draft, restored = false): Promise<void> {
   const pin = h('input', { id: 'pin', type: 'password', inputmode: 'numeric', autocomplete: 'new-password', maxlength: '8' });
   const pin2 = h('input', { id: 'pin2', type: 'password', inputmode: 'numeric', autocomplete: 'new-password', maxlength: '8' });
   const msg = h('div');
@@ -250,7 +316,7 @@ async function choosePin(seed: Uint8Array, d: Draft): Promise<void> {
     void busy(save, 'Saving…', async () => {
       if (!isValidPin(pin.value)) return void msg.replaceChildren(note('The PIN must be 4 to 8 digits.', 'error'));
       if (pin.value !== pin2.value) return void msg.replaceChildren(note("The two PINs don't match.", 'error'));
-      await finishSetup(seed, d, pin.value, false);
+      await finishSetup(seed, d, pin.value, false, restored);
     }),
   );
   show(
@@ -271,9 +337,13 @@ async function choosePin(seed: Uint8Array, d: Draft): Promise<void> {
   pin.focus();
 }
 
-async function finishSetup(seed: Uint8Array, d: Draft, pin: string, demo: boolean): Promise<void> {
+async function finishSetup(seed: Uint8Array, d: Draft, pin: string, demo: boolean, restored = false): Promise<void> {
   const locked = await lockSeed(seed, pin);
-  await saveProfile({ v: 1, shop: d.shop, currency: d.currency, demo, pub: traderKey(seed).pub, locked, mint: d.mint, rates: d.rates, lang: d.lang });
+  await saveProfile({
+    v: 1, shop: d.shop, currency: d.currency, demo, pub: traderKey(seed).pub, locked, mint: d.mint, rates: d.rates, lang: d.lang,
+    activeIds: d.mint.keysets.map((k) => k.id),
+    ...(restored ? { needsOnlineCheck: true } : {}),
+  });
   void keepStorage();
   location.hash = '#price';
   route();
@@ -296,7 +366,16 @@ function restore(): void {
   show(
     screen({
       top: [h('p', { class: 'shop' }, 'Restore your shop')],
-      body: [h('label', { for: 'code' }, 'Your recovery code'), input, msg],
+      body: [
+        h('label', { for: 'code' }, 'Your recovery code'),
+        input,
+        h('label', { for: 'file' }, 'Or a backup file (brings your money and sales too)'),
+        h('input', { id: 'file', type: 'file', accept: 'application/json,.json', onchange: (e: Event) => {
+          const f = (e.target as HTMLInputElement).files?.[0];
+          if (f) void restoreBackup(f, msg);
+        } }),
+        msg,
+      ],
       actions: [
         button('Next', () => {
           const seed = parseRecoveryCode(input.value);
@@ -428,10 +507,13 @@ function scanScreen(requested: number | null, shownFiat: number | null): void {
 }
 
 let lastReceipt = '';
+/** set when a restored phone couldn't confirm a receipt because it was offline */
+let msgAfterRestore = false;
 
 async function check(text: string, requested: number | null, shownFiat: number | null): Promise<void> {
   const p = profile!;
   lastReceipt = text;
+  msgAfterRestore = false;
   const before = blocked;
   const t0 = performance.now();
   const decoded = decodeReceipt(text, p.mint.keysets.map((k) => k.id));
@@ -439,8 +521,21 @@ async function check(text: string, requested: number | null, shownFiat: number |
   if (!decoded.ok) {
     v = { ok: false, code: 'malformed', detail: decoded.detail };
   } else {
-    store.context = { requestedSats: requested, fiat: shownFiat ? { amount: shownFiat, currency: p.currency } : null, now: Date.now };
-    v = await acceptReceipt(decoded.token, { traderPubkey: p.pub, mints: [p.mint] }, requested ? { requestedSats: requested } : {}, nobleCurve, store);
+    v = await acceptReceipt(decoded.token, { traderPubkey: p.pub, mints: [p.mint] }, requested ? { requestedSats: requested } : {}, nobleCurve, store, {
+      requestedSats: requested,
+      fiat: shownFiat ? { amount: shownFiat, currency: p.currency } : null,
+    });
+    // After a restore from the code alone, this phone doesn't know old receipts: ask the mint.
+    if ((v.ok || (v.code === 'underpaid' && v.kept)) && p.needsOnlineCheck) {
+      const payment = v.ok ? v : v.received!;
+      try {
+        const states = await new MintApi(p.mint.url).checkState(payment.ys);
+        if (states.some((x) => x !== 'UNSPENT')) v = { ok: false, code: 'already_received', detail: 'the mint says this receipt was already spent' };
+      } catch {
+        v = { ok: false, code: 'unknown_keys', detail: 'restored phone must confirm receipts online' };
+        msgAfterRestore = true;
+      }
+    }
   }
   verdict(v, requested, shownFiat, { ms: Math.round(performance.now() - t0), requests: blocked - before });
 }
@@ -472,6 +567,7 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
           h('p', { class: 'v-line' }, W.lockedToYou(sats(lands))),
           v.overpaidSats > 0 ? h('p', { class: 'v-line' }, W.moreThanAsked(sats(v.overpaidSats))) : null,
           h('p', { class: 'v-note' }, offlineLine),
+          isTestMint(p) ? h('p', { class: 'v-note' }, 'Test mint: fake sats, not real money.') : null,
         ],
         actions: [button(W.nextSale, () => { typed = ''; priceScreen(); }), ...again],
       }),
@@ -508,7 +604,7 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
       body: [
         h('p', { class: 'stamp' }, used ? W.used : W.notPaid),
         h('p', { class: 'v-head' }, used ? W.scannedBefore : W.dontRelease),
-        h('p', { class: 'v-line' }, W.reason(v.code)),
+        h('p', { class: 'v-line' }, msgAfterRestore ? 'This phone was restored: go online once so it can confirm receipts.' : W.reason(v.code)),
         h('p', { class: 'v-note' }, used ? W.cameOnce : W.screenSays),
       ],
       actions: [button(W.scanAgain, () => scanScreen(requested, shownFiat)), button(W.newSale, () => priceScreen(), 'quiet'), ...again],
@@ -575,14 +671,15 @@ async function demoCustomer(requested: number, shownFiat: number | null): Promis
 
 // ------------------------------------------------------------ sales, collect, cash out
 
-async function salesScreen(): Promise<void> {
+async function salesScreen(flash?: string): Promise<void> {
   const p = profile!;
   const all = (await store.sales()).sort((a, b) => b.at - a.at);
   const today = new Date().toDateString();
   const todays = all.filter((s) => new Date(s.at).toDateString() === today);
   const lands = (s: Sale) => s.totalSats - s.feeSats;
   const sold = sumAmounts(todays.map((s) => ({ amount: lands(s) })));
-  const toCollect = all.filter((s) => !s.collected);
+  const pendingNow = await pendingOps();
+  const toCollect = all.filter((s) => !s.collected && !s.problem && !pendingNow.some((o) => o.kind === 'collect' && o.saleId === s.id));
   const held = sumAmounts(await wallet());
   const money = (n: number) => (p.rates ? `${fiat(satsToFiat(n, p.currency, p.rates))} (${sats(n)})` : sats(n));
   /** fiat on top, sats underneath; a full-price sale shows the price as typed */
@@ -590,20 +687,38 @@ async function salesScreen(): Promise<void> {
     p.rates || typedFiat ? [typedFiat ? fiat(typedFiat) : fiat(satsToFiat(n, p.currency, p.rates!)), h('small', {}, sats(n))] : [sats(n)];
   const saleFiat = (s: Sale) => (s.fiat && !s.part ? s.fiat.amount : null);
   const fiatTotal = (list: Sale[]) => (list.length && list.every((s) => saleFiat(s) !== null) ? list.reduce((n, s) => n + saleFiat(s)!, 0) : null);
-  const msg = h('div');
+  const msg = h('div', {}, flash ? note(flash) : null, pendingNow.length ? note(`${pendingNow.length} step${pendingNow.length === 1 ? ' is' : 's are'} still finishing with the mint. They settle by themselves when you're online.`) : null);
 
   const collectBtn = button(`Collect ${toCollect.length} payment${toCollect.length === 1 ? '' : 's'}`, () =>
     void withPin(msg, async (key) => {
       const api = new MintApi(p.mint.url);
+      const into = collectInto(p);
       let got = 0;
+      const failed: string[] = [];
       for (const s of toCollect) {
-        const r = await collect(api, s.proofs, key, p.mint.keysets, pickKeyset(p.mint.keysets));
-        await store.set('wallet', [...(await wallet()), ...r.proofs]);
-        await store.markCollected([s.id]);
-        got += sumAmounts(r.proofs);
+        try {
+          // Save the outputs first: if the phone dies mid-swap, they recover the money.
+          const plan = planCollect(s.proofs, key, p.mint.keysets, into);
+          const op: PendingOp = { kind: 'collect', id: opId(), saleId: s.id, plan, at: Date.now() };
+          await store.set('pending', [...(await pendingOps()), op]);
+          const r = await collect(api, s.proofs, key, p.mint.keysets, into, plan);
+          await store.apply({ kv: { wallet: [...(await wallet()), ...r.proofs], pending: (await pendingOps()).filter((o) => o.id !== op.id) }, collected: [s.id] });
+          got += sumAmounts(r.proofs);
+        } catch (e) {
+          // The swap may still have happened (a lost answer): settle it, then look at the rest.
+          await settlePending().catch(() => undefined);
+          if (e instanceof MintError && /spent/i.test(e.message)) {
+            const states = await api.checkState(s.ys).catch(() => []);
+            const stillPending = (await pendingOps()).some((o) => o.kind === 'collect' && o.saleId === s.id);
+            if (!stillPending && states.length && states.every((x) => x === 'SPENT')) await store.apply({ problems: { [s.id]: 'spent elsewhere' } });
+          }
+          failed.push(explain(e));
+        }
       }
-      msg.replaceChildren(note(`Collected ${money(got)}. The mint confirmed it's real and it's yours.`));
-      void salesScreen();
+      const parts = [got ? `Collected ${money(got)}. The mint confirmed it's real and it's yours.` : ''];
+      if (failed.length) parts.push(`${failed.length} payment${failed.length === 1 ? '' : 's'} couldn't be collected now: ${failed[0]}`);
+      msg.replaceChildren(note(parts.filter(Boolean).join(' '), failed.length && !got ? 'error' : 'info'));
+      void salesScreen(parts.filter(Boolean).join(' '));
     }),
   );
   collectBtn.disabled = toCollect.length === 0;
@@ -628,7 +743,7 @@ async function salesScreen(): Promise<void> {
           h('li', {},
             h('span', {}, new Date(s.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })),
             h('span', {}, ...amountCell(lands(s), saleFiat(s))),
-            h('span', { class: 'tag' }, s.part ? 'part paid' : s.collected ? 'collected' : 'to collect'),
+            h('span', { class: 'tag' }, s.problem ? "can't collect" : s.part ? 'part paid' : s.collected ? 'collected' : 'to collect'),
           ))),
         all.length === 0 ? h('p', { class: 'hint' }, 'No sales yet. Paid receipts show up here.') : null,
         p.demo ? h('p', { class: 'hint' }, `Demo PIN: ${DEMO_PIN}`) : null,
@@ -640,6 +755,8 @@ async function salesScreen(): Promise<void> {
           if (navigator.share) void navigator.share({ text: summary }).catch(() => undefined);
           else window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank', 'noopener');
         }, 'quiet'),
+        button('Save a backup file', () => void saveBackup(), 'quiet'),
+        isTestMint(p) ? button(p.demo ? 'Leave the demo' : 'Start over (test mint)', () => void startOver(), 'quiet') : null,
       ],
     }),
   );
@@ -685,14 +802,26 @@ async function cashOutScreen(): Promise<void> {
           const text = invoice.value.trim();
           if (!/^ln/i.test(text)) return void msg.replaceChildren(note('Paste a Lightning invoice (it starts with ln).', 'error'));
           void withPin(msg, async (key) => {
-            const out = await cashOut(new MintApi(p.mint.url), held, key, p.mint.keysets, pickKeyset(p.mint.keysets), text);
-            if (out.state === 'PAID') {
-              await store.set('wallet', out.change);
-              msg.replaceChildren(note(`Paid ${sats(out.paidSats)} to your wallet. Fees ${sats(out.feeSats)}. ${sats(sumAmounts(out.change))} still held.`));
-            } else {
-              await store.set('wallet', []);
-              await store.set('pendingCashOut', { at: Date.now(), proofs: held });
-              msg.replaceChildren(note('The payment is still going through. Check your wallet in a few minutes.'));
+            const api = new MintApi(p.mint.url);
+            const into = collectInto(p);
+            const plan = await planCashOut(api, held, key, p.mint.keysets, into, text);
+            // Take the money out of the wallet and save the step in one go, before paying.
+            const op: PendingOp = { kind: 'melt', id: opId(), plan, at: Date.now() };
+            const spent = new Set(plan.proofs.map((x) => x.secret));
+            await store.apply({ kv: { wallet: (await wallet()).filter((x) => !spent.has(x.secret)), pending: [...(await pendingOps()), op] } });
+            try {
+              const out = await runCashOut(api, plan, key, into);
+              if (out.state === 'PAID') {
+                await store.apply({ kv: { wallet: [...(await wallet()), ...out.change], pending: (await pendingOps()).filter((o) => o.id !== op.id) } });
+                msg.replaceChildren(note(`Paid ${sats(out.paidSats)} to your wallet. Fees ${sats(out.feeSats)}. ${sats(sumAmounts(out.change))} still held.`));
+              } else {
+                msg.replaceChildren(note('The payment is still going through. It settles by itself next time you open Sealpay online.'));
+              }
+            } catch (e) {
+              // Failed outright, or the answer was lost: ask the mint where it stands.
+              await settlePending().catch(() => undefined);
+              const still = (await pendingOps()).some((o) => o.id === op.id);
+              msg.replaceChildren(note(still ? `${explain(e)} The payment may still go through; it settles by itself when you're online.` : explain(e), 'error'));
             }
           });
         }),
@@ -700,6 +829,49 @@ async function cashOutScreen(): Promise<void> {
       ],
     }),
   );
+}
+
+/** Everything on this phone as a file: the key (still PIN-locked), money held, sales and seen receipts. */
+async function saveBackup(): Promise<void> {
+  const all = await store.exportAll();
+  const kv = { profile: await store.get('profile'), wallet: await wallet(), pending: await pendingOps() };
+  const blob = new Blob([JSON.stringify({ sealpayBackup: 1, at: new Date().toISOString(), kv, seen: all.seen, sales: all.sales })], { type: 'application/json' });
+  const name = `sealpay-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const file = new File([blob], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: 'Sealpay backup' }).catch(() => undefined);
+    return;
+  }
+  const a = h('a', { href: URL.createObjectURL(blob), download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
+async function restoreBackup(file: File, msg: HTMLElement): Promise<void> {
+  try {
+    const data = JSON.parse(await file.text());
+    if (data?.sealpayBackup !== 1 || !data.kv?.profile?.pub) throw new Error('This is not a Sealpay backup file.');
+    await store.importAll({ kv: data.kv, seen: Array.isArray(data.seen) ? data.seen : [], sales: Array.isArray(data.sales) ? data.sales : [] });
+    profile = (await store.get<Profile>('profile')) ?? null;
+    location.hash = '#sales';
+    route();
+  } catch (e) {
+    msg.replaceChildren(note(explain(e), 'error'));
+  }
+}
+
+/** Test mint only: wipe this phone's Sealpay data and start again. */
+async function startOver(): Promise<void> {
+  if (!profile || !isTestMint(profile)) return;
+  if (!window.confirm('Delete this test stall and its fake sats from this phone?')) return;
+  store.db.close();
+  await new Promise<void>((resolve) => {
+    const r = indexedDB.deleteDatabase('sealpay');
+    r.onsuccess = r.onerror = r.onblocked = () => resolve();
+  });
+  location.hash = '';
+  location.reload();
 }
 
 // ------------------------------------------------------------ routing

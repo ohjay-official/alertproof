@@ -27,6 +27,8 @@ export interface Sale {
   part: boolean;
   /** collected at the mint yet? */
   collected: boolean;
+  /** set when the mint says this money can't be collected (already spent elsewhere) */
+  problem?: string;
   proofs: Proof[];
   ys: string[];
 }
@@ -68,10 +70,14 @@ export async function keepStorage(): Promise<boolean> {
   }
 }
 
+export interface ClaimContext {
+  requestedSats: number | null;
+  fiat?: { amount: number; currency: string } | null;
+  now?: () => number;
+}
+
 export class IdbStore implements SeenStore {
   readonly db: IDBDatabase;
-  /** set before claim() so the saved sale records what was asked */
-  context: { requestedSats: number | null; fiat?: { amount: number; currency: string } | null; now: () => number } = { requestedSats: null, now: Date.now };
 
   constructor(db: IDBDatabase) {
     this.db = db;
@@ -81,7 +87,7 @@ export class IdbStore implements SeenStore {
    * One readwrite transaction: if any Y was seen, write nothing and resolve
    * false; otherwise record every Y and the sale together.
    */
-  async claim(ys: readonly string[], payment: Received): Promise<boolean> {
+  async claim(ys: readonly string[], payment: Received, ctx: ClaimContext = { requestedSats: null }): Promise<boolean> {
     const tx = this.db.transaction(['seen', 'sales'], 'readwrite');
     const seen = tx.objectStore('seen');
     const sales = tx.objectStore('sales');
@@ -106,7 +112,7 @@ export class IdbStore implements SeenStore {
       await finished.catch(() => undefined);
       return false;
     }
-    const at = this.context.now();
+    const at = (ctx.now ?? Date.now)();
     for (const y of ys) seen.put(at, y);
     const lands = payment.totalSats - payment.feeSats;
     const sale: Omit<Sale, 'id'> = {
@@ -114,9 +120,9 @@ export class IdbStore implements SeenStore {
       mint: payment.mint,
       totalSats: payment.totalSats,
       feeSats: payment.feeSats,
-      requestedSats: this.context.requestedSats,
-      fiat: this.context.fiat ?? null,
-      part: this.context.requestedSats !== null && lands < this.context.requestedSats,
+      requestedSats: ctx.requestedSats,
+      fiat: ctx.fiat ?? null,
+      part: ctx.requestedSats !== null && lands < ctx.requestedSats,
       collected: false,
       proofs: payment.proofs,
       ys: [...ys],
@@ -141,6 +147,38 @@ export class IdbStore implements SeenStore {
         if (r.result) store.put({ ...r.result, collected: true });
       };
     }
+    await done(tx);
+  }
+
+  /**
+   * Several changes in one transaction, so money never sits in two places or
+   * none: the wallet, the list of pending steps, and which sales are collected.
+   */
+  async apply(change: { kv?: Record<string, unknown>; collected?: number[]; problems?: Record<number, string> }): Promise<void> {
+    const tx = this.db.transaction(['kv', 'sales'], 'readwrite');
+    const kv = tx.objectStore('kv');
+    const sales = tx.objectStore('sales');
+    for (const [k, v] of Object.entries(change.kv ?? {})) kv.put(v, k);
+    const touch = new Set([...(change.collected ?? []), ...Object.keys(change.problems ?? {}).map(Number)]);
+    for (const id of touch) {
+      const r = sales.get(id);
+      r.onsuccess = () => {
+        if (!r.result) return;
+        const next = { ...r.result };
+        if (change.collected?.includes(id)) next.collected = true;
+        if (change.problems?.[id]) next.problem = change.problems[id];
+        sales.put(next);
+      };
+    }
+    await done(tx);
+  }
+
+  /** Put a backup back: profile and wallet replace this phone's, seen receipts and sales are added. */
+  async importAll(backup: { kv: Record<string, unknown>; seen: string[]; sales: Sale[] }): Promise<void> {
+    const tx = this.db.transaction(['kv', 'seen', 'sales'], 'readwrite');
+    for (const [k, v] of Object.entries(backup.kv)) tx.objectStore('kv').put(v, k);
+    for (const y of backup.seen) tx.objectStore('seen').put(0, y);
+    for (const sale of backup.sales) tx.objectStore('sales').put(sale);
     await done(tx);
   }
 

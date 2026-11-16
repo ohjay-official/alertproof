@@ -174,7 +174,7 @@ class Reader {
         const slice = this.b.slice(this.at, this.at + n);
         this.at += n;
         if (major === 2) return slice;
-        return new TextDecoder('utf-8', { fatal: true }).decode(slice);
+        return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(slice);
       }
       case 4: {
         if (n > MAX_ITEMS) throw new Error('list too long');

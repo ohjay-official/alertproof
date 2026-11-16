@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import { MemoryMint } from './test/memory-mint.ts';
 import { MintApi, MintError } from './mint-api.ts';
 import { finishPayment, paymentState, pickKeyset, startPayment } from './pay.ts';
-import { cashOut, collect } from './collect.ts';
-import { amountWithFee, bitLength, inputFee, splitAmount, sumAmounts } from './ecash.ts';
+import { cashOut, collect, planCashOut, planCollect, recoverOutputs, runCashOut, settleCashOut } from './collect.ts';
+import { amountWithFee, bitLength, inputFee, p2pkWitness, splitAmount, sumAmounts } from './ecash.ts';
 import { newSeed, parseRecoveryCode, recoveryCode, traderKey } from './keys.ts';
 import { decodeReceipt, encodeReceipt } from './receipt.ts';
 import { acceptReceipt, checkLock, checkReceipt, MemorySeenStore } from '../verify/index.ts';
@@ -205,4 +205,36 @@ test('recovery code: a mistyped character is caught', () => {
   }
   // a 10-bit check misses about 1 in 1,000 typos; across ~80 typos expect all or nearly all caught
   assert.ok(caught >= tried - 1, `${caught} of ${tried} caught`);
+});
+
+test('a collect whose answer never came back is recovered from the saved plan', async () => {
+  const s = setup();
+  const { token } = await paid(s);
+  const plan = planCollect(token.proofs, s.trader, [s.ks], s.ks);
+  // the swap happens, but the phone dies before reading the answer
+  await s.api.swap(token.proofs.map((p) => ({ id: p.id, amount: p.amount, secret: p.secret, C: p.C, witness: p2pkWitness(p.secret, s.trader.priv) })), plan.outputs.map(({ amount, id, B_ }) => ({ amount, id, B_ }))).catch(() => undefined);
+  const back = await recoverOutputs(s.api, plan.outputs, s.ks);
+  assert.ok(back && sumAmounts(back) === 1334 - plan.feeSats);
+});
+
+test('a cash out that went through while the phone was away is settled with its change', async () => {
+  const s = setup();
+  const { token } = await paid(s);
+  const { proofs } = await collect(s.api, token.proofs, s.trader, [s.ks], s.ks);
+  const plan = await planCashOut(s.api, proofs, s.trader, [s.ks], s.ks, 'lnfake1000');
+  s.mint.loseNextAnswer = true;
+  await assert.rejects(runCashOut(s.api, plan, s.trader, s.ks));
+  const settled = await settleCashOut(s.api, plan, s.ks, (x) => nobleCurve.hashToCurve(x));
+  assert.equal(settled.state, 'PAID');
+  if (settled.state === 'PAID') assert.equal(sumAmounts(settled.change), sumAmounts(proofs) - 1000 - inputFee(proofs, [s.ks]));
+});
+
+test('a cash out that never reached the mint gives the money back', async () => {
+  const s = setup();
+  const { token } = await paid(s);
+  const { proofs } = await collect(s.api, token.proofs, s.trader, [s.ks], s.ks);
+  const plan = await planCashOut(s.api, proofs, s.trader, [s.ks], s.ks, 'lnfake500');
+  const settled = await settleCashOut(s.api, plan, s.ks, (x) => nobleCurve.hashToCurve(x));
+  assert.equal(settled.state, 'FAILED');
+  if (settled.state === 'FAILED') assert.equal(sumAmounts(settled.proofs), sumAmounts(proofs));
 });
