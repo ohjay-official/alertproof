@@ -29,6 +29,8 @@ interface Saved {
   cancelledAt?: number;
   /** when the mint first called it expired: kept across reloads and rescans */
   expiredAt?: number;
+  /** the code's naira/CFA price matched its sats at today's rate */
+  priceOk?: boolean;
 }
 
 const KEY = 'sealpay:payments';
@@ -44,8 +46,10 @@ function loadAll(): Saved[] {
       list.push(JSON.parse(old) as Saved);
       localStorage.removeItem(OLD_KEY);
     }
-    // Receipts are kept a week for disputes; unfinished payments until they finish.
-    return list.filter((x) => x?.pending?.quote && (!x.receipt || Date.now() - (x.paidAt ?? 0) < KEEP_MS));
+    // Receipts are kept a week for disputes; unfinished payments until they finish; cancelled ones a day.
+    return list.filter(
+      (x) => x?.pending?.quote && (x.receipt ? Date.now() - (x.paidAt ?? 0) < KEEP_MS : !x.cancelledAt || Date.now() - x.cancelledAt < 86_400_000),
+    );
   } catch {
     return [];
   }
@@ -60,19 +64,13 @@ function save(s: Saved): void {
   }
 }
 
-function forget(quote: string): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(loadAll().filter((x) => x.pending.quote !== quote)));
-  } catch {
-    // fine
-  }
-}
 
 /** The newest unfinished payment, if any: it comes first, whatever link was opened. */
 const unfinished = () => loadAll().filter((x) => !x.receipt && !x.cancelledAt).sort((a, b) => b.pending.createdAt - a.pending.createdAt)[0];
 const sameCode = (a: PayLink, b: PayLink) => a.traderPubkey === b.traderPubkey && a.sats === b.sats && a.mint === b.mint && a.made === b.made;
 
-const price = (l: PayLink) => (l.fiat ? formatFiat(l.fiat.amount, l.fiat.currency) : sats(l.sats ?? 0));
+const price = (l: PayLink, ok = true) => (l.fiat && ok ? formatFiat(l.fiat.amount, l.fiat.currency) : sats(l.sats ?? 0));
+let priceChecked = false;
 
 function start(): void {
   const parsed = parsePayLink(location.hash);
@@ -118,6 +116,7 @@ function newPayment(): void {
 
 function payScreen(link: PayLink, other?: Saved): void {
   generation++;
+  priceChecked = false;
   if (!MINTS.some((m) => normalizeMintUrl(m.url) === link.mint)) {
     return show(screen({ body: [h('h1', {}, "Sealpay doesn't support this trader's mint yet."), note(link.mint, 'error')] }));
   }
@@ -135,7 +134,7 @@ function payScreen(link: PayLink, other?: Saved): void {
         const mint = await fetchTrustedMint(link.mint);
         const keyset = pickKeyset(mint.keysets, link.keysetHint);
         const pending = await startPayment(new MintApi(link.mint), keyset, link.traderPubkey, link.sats!);
-        const s: Saved = { link, pending, keyset };
+        const s: Saved = { link, pending, keyset, priceOk: priceChecked };
         save(s);
         invoice(s);
       } catch (err) {
@@ -149,6 +148,7 @@ function payScreen(link: PayLink, other?: Saved): void {
       .then((rates) => {
         const expected = fiatToSats(f.amount, f.currency, rates);
         if (Math.abs(expected - link.sats!) / link.sats! <= 0.05) {
+          priceChecked = true;
           headline.textContent = formatFiat(f.amount, f.currency);
           sub.textContent = `${sats(link.sats!)}, from any Lightning wallet`;
           pay.textContent = `Pay ${formatFiat(f.amount, f.currency)}`;
@@ -194,7 +194,7 @@ function invoice(s: Saved): void {
     screen({
       top: [h('p', { class: 'shop' }, `Pay ${s.link.shop}`)],
       body: [
-        h('p', { class: 'small-amount' }, price(s.link)),
+        h('p', { class: 'small-amount' }, price(s.link, s.priceOk)),
         h('p', { class: 'sub' }, `${sats(s.pending.amountSats)}, from any Lightning wallet`),
         h('div', { class: 'qr' }, qrSvg(`lightning:${s.pending.invoice}`, 'Lightning invoice')),
         status,
@@ -232,7 +232,9 @@ function invoice(s: Saved): void {
         }
         status.textContent = 'This invoice looks expired. Still checking in case your payment arrives late.';
         if (Date.now() - expiredSince > 10 * 60_000) {
-          forget(s.pending.quote);
+          // Not deleted: kept a day and checked again, in case this phone's clock is off and it gets paid.
+          s.cancelledAt = Date.now();
+          save(s);
           status.replaceWith(note('This invoice expired and nothing was paid. Scan the trader’s code again.', 'error'));
           return;
         }
@@ -260,7 +262,7 @@ function receipt(s: Saved): void {
     screen({
       top: [h('p', { class: 'shop' }, `Receipt for ${s.link.shop}`)],
       body: [
-        h('p', { class: 'small-amount' }, price(s.link)),
+        h('p', { class: 'small-amount' }, price(s.link, s.priceOk)),
         h('p', { class: 'sub' }, 'Show this to the trader'),
         qr.box,
         qr.dots,
@@ -280,6 +282,14 @@ function receipt(s: Saved): void {
 }
 
 keepOffline();
+// While the page is open, a cancelled payment that lands after all comes back within a minute.
+window.setInterval(() => {
+  const before = unfinished();
+  void recheckCancelled().then(() => {
+    const after = unfinished();
+    if (after && after.pending.quote !== before?.pending.quote) invoice(after);
+  });
+}, 45_000);
 window.addEventListener('hashchange', () => {
   window.clearTimeout(polling);
   generation++;

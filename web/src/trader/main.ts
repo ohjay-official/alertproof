@@ -8,7 +8,7 @@
  * Demo mode makes a test trader on fake sats and lets one phone play both
  * sides, with a switch that cuts the network to show the check needs none.
  */
-import { acceptReceipt, checkLock, checkReceipt, type Proof, type TrustedMint, type Verdict } from '../../../src/verify/index.ts';
+import { acceptReceipt, checkLock, checkReceipt, type CachedKeyset, type Proof, type TrustedMint, type Verdict } from '../../../src/verify/index.ts';
 import { nobleCurve } from '../../../src/verify/curve-noble.ts';
 import { fetchTrustedMint } from '../../../src/wallet/mint-cache.ts';
 import { decodeReceipt, encodeReceipt } from '../../../src/wallet/receipt.ts';
@@ -19,9 +19,9 @@ import { fetchRates, fiatToSats, formatFiat, rateAge, satsToFiat, type Currency,
 import { FrameCollector } from '../../../src/wallet/frames.ts';
 import { MintApi } from '../../../src/wallet/mint-api.ts';
 import { finishPayment, paymentState, pickKeyset, startPayment } from '../../../src/wallet/pay.ts';
-import { collect, planCashOut, planCollect, recoverOutputs, runCashOut, settleCashOut, type CollectPlan, type MeltPlan } from '../../../src/wallet/collect.ts';
+import { collect, MeltFailedError, planCashOut, planCollect, recoverOutputs, runCashOut, settleCashOut, type CollectPlan, type MeltPlan } from '../../../src/wallet/collect.ts';
 import { MintError } from '../../../src/wallet/mint-api.ts';
-import { sumAmounts } from '../../../src/wallet/ecash.ts';
+import { inputFee, sumAmounts } from '../../../src/wallet/ecash.ts';
 import { IdbStore, keepStorage, openDb, type Sale } from '../../../src/app/idb-store.ts';
 import { keepOffline } from '../shared/offline.ts';
 import { busy, button, explain, h, note, sats, screen, show } from '../shared/dom.ts';
@@ -180,32 +180,45 @@ async function settlePendingLocked(): Promise<void> {
   const p = profile!;
   const api = new MintApi(p.mint.url);
   for (const op of await pendingOps()) {
-    if (op.kind === 'collect') {
-      const ks = p.mint.keysets.find((k) => k.id === op.plan.outputs[0]?.id);
-      const back = ks ? await recoverOutputs(api, op.plan.outputs, ks) : null;
-      if (back) {
-        await store.apply({ addProofs: back, removePendingId: op.id, collected: [op.saleId] });
-        continue;
-      }
-      const sale = (await store.sales()).find((x) => x.id === op.saleId);
-      const states = sale ? await api.checkState(sale.ys) : [];
-      if (states.length && states.every((x) => x === 'SPENT')) {
-        await store.apply({ removePendingId: op.id, problems: { [op.saleId]: 'spent elsewhere' } });
-      } else if (states.every((x) => x === 'UNSPENT')) {
-        // Looks like the swap never reached the mint. Wait a while before dropping the saved outputs, in case it lands late.
-        if (!op.unseenSince) await store.apply({ updatePending: { ...op, unseenSince: Date.now() } });
-        else if (Date.now() - op.unseenSince > CONFIRM_FAILED_MS) await store.apply({ removePendingId: op.id });
-      }
-    } else {
-      const ks = p.mint.keysets.find((k) => k.id === op.plan.blanks[0]?.id) ?? collectInto(p);
-      const r = await settleCashOut(api, op.plan, ks, (x) => nobleCurve.hashToCurve(x));
-      if (r.state === 'PAID') {
-        await store.apply({ addProofs: r.change, removePendingId: op.id });
-      } else if (r.state === 'FAILED') {
-        if (!op.unseenSince) await store.apply({ updatePending: { ...op, unseenSince: Date.now() } });
-        else if (Date.now() - op.unseenSince > CONFIRM_FAILED_MS) await store.apply({ addProofs: r.proofs, removePendingId: op.id });
-      }
+    // One stuck step never blocks the others: each is settled on its own.
+    try {
+      await settleOne(api, p, op);
+    } catch {
+      // leave it for next time
     }
+  }
+}
+
+async function settleOne(api: MintApi, p: Profile, op: PendingOp): Promise<void> {
+  if (op.kind === 'collect') {
+    const ks = p.mint.keysets.find((k) => k.id === op.plan.outputs[0]?.id);
+    // A keyset this phone doesn't know yet: never drop the step (its outputs are the only way back to the money).
+    if (!ks) return;
+    const back = await recoverOutputs(api, op.plan.outputs, ks);
+    if (back) {
+      await store.apply({ addProofs: back, removePendingId: op.id, collected: [op.saleId] });
+      return;
+    }
+    const sale = (await store.sales()).find((x) => x.id === op.saleId);
+    const states = sale ? await api.checkState(sale.ys) : [];
+    const unseenLongEnough = op.unseenSince && Date.now() - op.unseenSince > CONFIRM_FAILED_MS;
+    if (!op.unseenSince) {
+      // Looks like the swap never reached the mint. Wait a while before deciding, in case it lands late.
+      await store.apply({ updatePending: { ...op, unseenSince: Date.now() } });
+    } else if (unseenLongEnough) {
+      if (states.every((x) => x === 'UNSPENT')) await store.apply({ removePendingId: op.id });
+      else await store.apply({ removePendingId: op.id, problems: { [op.saleId]: states.every((x) => x === 'SPENT') ? 'spent elsewhere' : 'partly spent elsewhere' } });
+    }
+    return;
+  }
+  const ks = p.mint.keysets.find((k) => k.id === op.plan.blanks[0]?.id) ?? (op.plan.blanks.length ? undefined : collectInto(p));
+  if (!ks) return;
+  const r = await settleCashOut(api, op.plan, ks, (x) => nobleCurve.hashToCurve(x));
+  if (r.state === 'PAID') {
+    await store.apply({ addProofs: r.change, removePendingId: op.id });
+  } else if (r.state === 'FAILED') {
+    if (!op.unseenSince) await store.apply({ updatePending: { ...op, unseenSince: Date.now() } });
+    else if (Date.now() - op.unseenSince > CONFIRM_FAILED_MS) await store.apply({ addProofs: r.proofs, removePendingId: op.id });
   }
 }
 
@@ -381,7 +394,8 @@ async function finishSetup(seed: Uint8Array, d: Draft, pin: string, demo: boolea
   await saveProfile({
     v: 1, shop: d.shop, currency: d.currency, demo, pub: traderKey(seed).pub, locked, mint: d.mint, rates: d.rates, lang: d.lang,
     activeIds: d.mint.keysets.map((k) => k.id),
-    ...(restored && !backup ? { needsOnlineCheckUntil: Date.now() + ONLINE_CHECK_DAYS * 86_400_000 } : {}),
+    // Any restore: the old phone may have taken receipts after the last backup, so confirm online for a while.
+    ...(restored || backup ? { needsOnlineCheckUntil: Date.now() + ONLINE_CHECK_DAYS * 86_400_000 } : {}),
   });
   void keepStorage();
   location.hash = '#price';
@@ -448,7 +462,7 @@ function priceScreen(): void {
   const sub = h('p', { class: 'sub' });
   const go = button('Show pay code', () => {
     const v = Number(typed);
-    if (v > 0) payCode(v, !rates);
+    if (v > 0) payCode(v, !rates, rates);
   });
   const draw = () => {
     const v = Number(typed || '0');
@@ -492,11 +506,11 @@ function priceScreen(): void {
   );
 }
 
-function payCode(price: number, inSats = false): void {
+function payCode(price: number, inSats = false, rates: Rates | null = profile!.rates): void {
   stopScanner();
   const p = profile!;
-  const useRate = !inSats && p.rates;
-  const requested = useRate ? fiatToSats(price, p.currency, p.rates!) : price;
+  const useRate = !inSats && rates;
+  const requested = useRate ? fiatToSats(price, p.currency, rates!) : price;
   const shownFiat = useRate ? price : null;
   const link = payLinkUrl(location.origin, {
     traderPubkey: p.pub,
@@ -761,6 +775,15 @@ async function salesScreen(flash?: string): Promise<void> {
   networkOff = false;
   stopScanner();
   const p = profile!;
+  // Finish anything left halfway, in the background, whenever Sales opens online.
+  const pendingAtOpen = (await pendingOps()).length;
+  if (navigator.onLine && !flash && pendingAtOpen > 0) {
+    void settlePending()
+      .then(async () => {
+        if (location.hash === '#sales' && (await pendingOps()).length < pendingAtOpen) void salesScreen();
+      })
+      .catch(() => undefined);
+  }
   const all = (await store.sales()).sort((a, b) => b.at - a.at);
   const today = new Date().toDateString();
   const todays = all.filter((s) => new Date(s.at).toDateString() === today);
@@ -786,7 +809,11 @@ async function salesScreen(flash?: string): Promise<void> {
         let got = 0;
         const failed: string[] = [];
         const busyNow = await pendingOps();
+        // Re-read inside the lock: another tab may have collected some already.
+        const fresh = new Map((await store.sales()).map((x) => [x.id, x]));
         for (const s of toCollect) {
+          const now = fresh.get(s.id);
+          if (!now || now.collected || now.problem) continue;
           if (busyNow.some((o) => o.kind === 'collect' && o.saleId === s.id)) continue;
           try {
             // Save the outputs first: if the phone dies mid-swap, they recover the money.
@@ -918,7 +945,12 @@ async function cashOutScreen(): Promise<void> {
           }
           return 'The payment is still going through. It settles by itself next time you open Sealpay online.';
         } catch (e) {
-          // Failed outright, or the answer was lost: the saved step settles it (money back or change) when the mint confirms.
+          if (e instanceof MeltFailedError) {
+            // The mint itself says nothing was spent: the money goes straight back.
+            await store.apply({ addProofs: plan.proofs, removePendingId: op.id });
+            return explain(e);
+          }
+          // The answer was lost: the saved step settles it (money back, or change) once the mint confirms.
           return `${explain(e)} If any money left, it settles by itself when you're online; nothing is lost.`;
         }
       });
@@ -985,10 +1017,34 @@ async function readBackup(file: File, seed: Uint8Array): Promise<{ draft: Draft;
   const mint = await fetchTrustedMint(offered.url);
   const saved = Array.isArray(prof.mint?.keysets) ? prof.mint.keysets : [];
   // Keep older keysets only if the mint still serves exactly those keys.
-  // The file's saved mint keys are never used: they are the offline trust root, so they come from the mint itself.
+  // The file's saved keys are never trusted: every keyset its money uses is fetched from the mint itself.
   void saved;
-  const merged = mint;
   const lockedTo = (x: Proof) => checkLock(x.secret, prof.pub).ok;
+  const walletIn: Proof[] = (Array.isArray(data.kv.wallet) ? data.kv.wallet : []).filter(lockedTo);
+  const salesIn: Sale[] = (Array.isArray(data.sales) ? data.sales : []).filter((x: any) => Number.isSafeInteger(x?.id) && Array.isArray(x?.proofs) && x.proofs.every(lockedTo));
+  const ids = new Set([...walletIn, ...salesIn.flatMap((x) => x.proofs)].map((x) => x.id).filter((id) => !mint.keysets.some((k) => k.id === id)));
+  const older: CachedKeyset[] = [];
+  for (const id of ids) {
+    try {
+      const res = await fetch(`${mint.url}/v1/keys/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(15_000) });
+      const entry = (await res.json())?.keysets?.find((k: any) => k?.id === id);
+      if (entry?.unit === 'sat' && entry.keys) older.push({ id, unit: 'sat', keys: entry.keys, input_fee_ppk: Number.isSafeInteger(entry.input_fee_ppk) ? entry.input_fee_ppk : 0 });
+    } catch {
+      // that money stays in the file's sales, collectable once the mint serves its keys
+    }
+  }
+  const merged = { ...mint, keysets: [...older, ...mint.keysets] };
+  // Sale totals are recomputed from the proofs, never taken from the file.
+  const salesFixed = salesIn.map((x) => {
+    const total = x.proofs.reduce((n, pr) => n + (Number.isSafeInteger(pr.amount) ? pr.amount : 0), 0);
+    let fee = 0;
+    try {
+      fee = inputFee(x.proofs, merged.keysets);
+    } catch {
+      fee = 0;
+    }
+    return { ...x, totalSats: total, feeSats: fee };
+  });
   return {
     draft: {
       shop: cleanShopName(String(prof.shop ?? 'My shop')) || 'My shop',
@@ -997,10 +1053,11 @@ async function readBackup(file: File, seed: Uint8Array): Promise<{ draft: Draft;
       mint: merged,
       rates: null,
     },
-    wallet: (Array.isArray(data.kv.wallet) ? data.kv.wallet : []).filter(lockedTo),
-    pending: Array.isArray(data.kv.pending) ? data.kv.pending : [],
+    wallet: walletIn,
+    // Steps that were halfway at backup time are not taken from the file: a crafted step could redirect money.
+    pending: [],
     seen: (Array.isArray(data.seen) ? data.seen : []).filter((y: unknown) => typeof y === 'string' && SEEN_RE.test(y)),
-    sales: (Array.isArray(data.sales) ? data.sales : []).filter((x: any) => Number.isSafeInteger(x?.id) && Array.isArray(x?.proofs) && x.proofs.every(lockedTo)),
+    sales: salesFixed,
   };
 }
 

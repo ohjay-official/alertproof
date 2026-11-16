@@ -39,8 +39,9 @@ export interface PendingPayment {
  * start of its id) if the mint still has it active, otherwise the active sat
  * keyset with the lowest fee.
  */
-export function pickKeyset(keysets: readonly CachedKeyset[], hint?: string): CachedKeyset {
-  const sat = keysets.filter((k) => k.unit === 'sat');
+export function pickKeyset(keysets: readonly CachedKeyset[], hint?: string, nowSeconds = Math.floor(Date.now() / 1000)): CachedKeyset {
+  // Never a keyset the trader's check would refuse for expiring too soon (3 days, as in src/verify/check.ts).
+  const sat = keysets.filter((k) => k.unit === 'sat' && (k.final_expiry === undefined || nowSeconds + 3 * 86_400 < k.final_expiry));
   if (sat.length === 0) throw new Error('the mint has no active sat keyset');
   if (hint) {
     const match = sat.find((k) => k.id.startsWith(hint));

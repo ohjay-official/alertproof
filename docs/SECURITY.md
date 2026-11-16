@@ -6,7 +6,7 @@ Sealpay decides whether a trader releases goods, so the offline check is treated
 
 The receipt was signed by the trader's chosen mint (NUT-12 DLEQ against the cached key for each amount), is locked so only the trader's key can spend it with no way back for the payer (NUT-10/NUT-11), was not accepted before on this phone, and covers the amount asked for. Details: [src/verify/README.md](../src/verify/README.md). Threat model: [docs/SPEC.md](SPEC.md#threat-model-first-draft).
 
-What it can't promise offline: that the mint stays honest and solvent (custodial ecash; the trader picks the mint and Sealpay sweeps to their own Lightning address when online), and, across two phones sharing one key, that a receipt wasn't accepted on the other phone.
+What it can't promise offline: that the mint stays honest and solvent (custodial ecash: the trader picks the mint and cashes out to their own Lightning wallet by pasting an invoice; there is no automatic sweep yet), and, across two phones sharing one key, that a receipt wasn't accepted on the other phone. After a restore, the online confirmation catches receipts that were already collected, but not ones the old phone accepted and never collected: those look unspent to the mint. Collecting often keeps that window small.
 
 ## Passes so far
 
@@ -24,6 +24,14 @@ What it can't promise offline: that the mint stays honest and solvent (custodial
 | 10 | Nov 16 | Static analysis, again | CodeQL and npm audit on the full app | 0 vulnerabilities; no new findings in shipped code |
 | 11 | Nov 16 | Independent review of the app | A fresh reviewer (a separate Claude agent that didn't write the code) read everything built since Nov 11 (the app, storage, receipt codec, pay, collect, keys, PIN, pay link, service worker, headers) looking for false greens, lost money, injection and privacy leaks, and probed pure functions with hostile inputs | 1 critical, 4 high, 2 medium, 2 low, a few info; all fixed or stated, below. Confirmed sound: no untrusted text reaches HTML, strict pay-link parsing, safe short keyset ids, replay store transactions, PIN lock, CSP, service worker |
 | 12 | Nov 16 | The app in a real browser | CI runs the judge's demo on the test mint with the site's real headers, offline open, slow 3G and a real customer payment ([scripts/ui-check.mjs](../scripts/ui-check.mjs)) | 16 of 16 on every push |
+| 13 | Nov 16 | Review: functional correctness | A fresh Claude agent walked every flow (setup, restore, price, pay code, scan, verdicts, sales, collect, cash out, the customer's page, service worker) against the spec | 3 high, 4 medium, 5 low; no false green. Fixed, below |
+| 14 | Nov 16 | Review: access control and state | A fresh Claude agent traced who can read or change each piece of state; reproduced a wallet race in headless Chrome | 2 high, 3 medium, 2 low. Fixed, below |
+| 15 | Nov 16 | Review: financial logic | A fresh Claude agent checked every amount; 200,000 random conversions and 10,296 receipts through the real check | 1 high, 2 medium, 3 low; no money created, no false green. Fixed, below |
+| 16 | Nov 16 | Adversarial scenarios | A fresh Claude agent attacked as a dishonest customer, a swapped pay code, a malicious mint, a phone thief, and with denial-of-service inputs | 1 high, 3 medium, 4 low; no forged, edited, replayed, wrong-mint or wrong-key receipt passed. Fixed, below |
+| 17 | Nov 16 | Static analysis, second tool | Semgrep (javascript, typescript, xss, secrets, security-audit packs) in CI, next to CodeQL and npm audit | 2 warnings, both on a test that puts `<script>` in a shop name on purpose; nothing in shipped code |
+| 18 | Nov 16 | Fuzzing and invariants | 4,000 random price and fee cases for the minimal fee; 40 random sales end to end on the in-memory mint (green for the price, refused above it, collect and cash out conserve money, nothing spent twice); 20,000 conversions; 300 animated receipts; 3,000 pay links | all hold, on every push |
+| 19 | Nov 16 | Mutation testing, as a script | [scripts/mutate.mjs](../scripts/mutate.mjs): 26 rules broken on purpose across the check, lock rules, parser, mint URLs, receipt codec, QR frames and pay links | 26 of 26 caught, on every push; its first run found the 64-proof limit had no test of its own |
+| 20 | Nov 16 | Final independent review | A fifth fresh Claude agent formed its own view, then checked every fix from passes 13 to 16 | the fixes hold (Web Locks without deadlock, atomic wallet writes, backup rules, lock whitespace rule); 1 high, 6 medium, 4 low left, fixed, below |
 
 Both independent reviews (#7 and #11) were done by separate Claude agents that hadn't written the code, not by people; a human security review is still to come. The privacy pass is in the [privacy page](https://sealpay-beta.vercel.app/privacy) and review #11.
 
@@ -63,3 +71,30 @@ The seed behind the trader's key is stored encrypted with their PIN (PBKDF2-SHA2
 | Low | Sale details were shared between overlapping checks | Fixed: passed with each check |
 | Info | A leading byte-order mark was dropped from a secret | Fixed: kept, so the phone reads secrets exactly as mints do |
 | Info | Privacy: the mint can link collected payments to one key; CoinGecko sees the trader's IP | Stated on the privacy page |
+
+## Audit passes 13 to 16 and 20 (Nov 16): findings and what was done
+
+No pass found a false green for a forged, edited, replayed, wrong-mint or wrong-key receipt. What they found was mostly ways money could get stuck, be double-counted, or be shown wrongly, and ways a backup file or the phone itself could be misused.
+
+| Severity | Finding | Done |
+|---|---|---|
+| High | Two writers to the wallet (two tabs, or settling while collecting) could drop or duplicate money; reproduced in Chrome | Every money step runs under one lock (Web Locks, across tabs); the wallet and pending steps are read and written inside one transaction, de-duplicated by secret; buttons disable while running |
+| High | A cash out could reuse proofs a saved step already held, double-counting them | Cash out re-reads the wallet under the lock and skips anything a saved step holds |
+| High | "Save a backup file" needed no PIN and carried the PIN-locked seed, so a 4-digit PIN could be cracked from a shared file | Backup needs the PIN and leaves out the seed; restoring needs the recovery code plus the file, checked against it |
+| High | A restored phone recorded a receipt before its online check, so an honest customer could be told "Already used" | The mint confirms first, then the receipt is recorded |
+| High | An old unpaid invoice took over every later pay code on the customer's phone | It only resumes for the same code; otherwise a link back to it; "I'm not paying this" keeps the record in case a payment lands |
+| High | Restoring from a backup skipped the online confirmation | Every restore confirms receipts online for 14 days |
+| Medium | A crafted backup file could plant mint keys, a different shop key, steps or totals | The shop key must come from the recovery code; mint keys are always fetched from the mint (including older keysets the file's money uses); halfway steps are not imported; sale totals are recomputed from the proofs; only known fields are read |
+| Medium | A swapped pay code could show "Pay ₦1,000" while asking for 0.1 BTC | The naira or CFA price shows only once it matches the sats at today's rate; otherwise a warning |
+| Medium | One stuck step blocked all later settling; a step for an unknown keyset could be dropped, losing its outputs | Each step settles on its own; a step whose keyset isn't known yet is never dropped; mixed spent states are marked |
+| Medium | A failed Lightning payment kept the money away for 10 minutes or more | When the mint itself says the payment failed, the money comes straight back; settling also runs when Sales opens |
+| Medium | Pay codes could name a keyset that expires within the check's 3-day margin | Keysets that close are never picked |
+| Medium | Same price at the same stall within 30 minutes reused the old receipt | Each pay code carries when it was made |
+| Medium | Camera kept running after leaving the scan screen | Stopped on every screen change |
+| Low | A stray QR code mid-way through an animated receipt ended the scan as Not paid | Ignored |
+| Low | Locks with whitespace around them were accepted (a parser-differential surface) | Refused; Sealpay never writes them |
+| Low | Proofs from a keyset expiring within minutes passed | Refused within 3 days of expiry |
+| Low | splitAmount used 32-bit maths; rates weren't checked before use; prices too big for a pay code; "ask for more" rounded differently on screen and code; a rate arriving while typing changed what digits meant | All fixed |
+| Low | Wrong PINs could be tried without limit | They slow down after the third. Moving the phone's clock forward resets the wait; the 600,000-round key derivation remains the real cost |
+| Low | Start over could hang with a second tab open | The database closes for other tabs |
+| Info | Shop names could be cut mid-emoji or stack accent marks | Cut by whole characters; accent towers trimmed |

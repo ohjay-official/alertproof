@@ -92,6 +92,14 @@ export interface CashOut {
   change: Proof[];
 }
 
+/** The mint says the Lightning payment failed and nothing was spent: the proofs can go straight back. */
+export class MeltFailedError extends Error {
+  constructor() {
+    super('The Lightning payment failed. Nothing was spent; try again or use another invoice.');
+    this.name = 'MeltFailedError';
+  }
+}
+
 export interface MeltPlan {
   quote: string;
   amountSats: number;
@@ -131,7 +139,7 @@ export async function planCashOut(
 export async function runCashOut(api: MintApi, plan: MeltPlan, key: KeyPair, changeInto: CachedKeyset): Promise<CashOut> {
   const inputs = plan.proofs.map((p) => signedInput(p, key.priv));
   const result = await api.melt(plan.quote, inputs, wireOutputs(plan.blanks));
-  if (result.state === 'UNPAID') throw new Error('The Lightning payment failed. Nothing was spent; try again or use another invoice.');
+  if (result.state === 'UNPAID') throw new MeltFailedError();
   if (result.change.length > plan.blanks.length) throw new Error('mint returned more change than outputs');
   const change = result.change.map((sig, n) => unblind(sig, { ...plan.blanks[n]!, amount: sig.amount }, changeInto));
   return {
