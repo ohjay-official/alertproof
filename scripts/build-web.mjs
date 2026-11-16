@@ -54,7 +54,20 @@ const report = {
   },
   budgetGzip: 60 * 1024,
 };
+// What each chunk is made of, biggest packages first (bytes before gzip).
+report.contents = {};
+for (const [file, o] of Object.entries(result.metafile.outputs)) {
+  if (!file.endsWith('.js')) continue;
+  const byPkg = {};
+  for (const [input, v] of Object.entries(o.inputs)) {
+    const m = /node_modules\/((?:@[^/]+\/)?[^/]+)/.exec(input);
+    const key = m ? m[1] : input.split('/').slice(0, 2).join('/');
+    byPkg[key] = (byPkg[key] ?? 0) + v.bytesInOutput;
+  }
+  report.contents[file.split('/').pop()] = Object.fromEntries(Object.entries(byPkg).sort((a, b) => b[1] - a[1]).slice(0, 8));
+}
 writeFileSync(`${out}/sizes.json`, JSON.stringify(report, null, 2));
+for (const [f, c] of Object.entries(report.contents)) console.log(f, JSON.stringify(c));
 for (const [f, s] of Object.entries(sizes)) console.log(`${f.padEnd(28)} ${String(s.bytes).padStart(8)} B  ${String(s.gzip).padStart(7)} B gz`);
 const kb = (n) => (n / 1024).toFixed(1) + ' KB';
 console.log(`first load, gzipped: trader ${kb(report.firstLoadGzip.trader)}, customer ${kb(report.firstLoadGzip.customer)} (budget ${kb(report.budgetGzip)})`);
