@@ -15,7 +15,7 @@ What it can't promise offline: that the mint stays honest and solvent (custodial
 | 1 | Nov 11 | Functional correctness | Unit tests for every refusal code and the happy path, written before the app | 64 rule-layer tests pass (76 with the curve vectors and wallet modules) |
 | 2 | Nov 11 | Adversarial | Parser differential cases (duplicate keys, escapes, non-ASCII, numbers, trailing commas, deep nesting), forged, edited, relabelled and replayed receipts, a curve that throws | all refused |
 | 3 | Nov 11 | Fuzzing | Seeded: 3,000 single random changes to genuine receipts, 3,000 random edits to a valid lock | no change ever turns green except harmless spellings of the trusted mint URL; nothing throws |
-| 4 | Nov 11 | Mutation testing | Broke each of 20 rules on purpose and ran the tests | 19 of 20 caught at first; the off-by-one underpayment got a new test, now 20 of 20 |
+| 4 | Nov 11 | Mutation testing (once, by hand, rule layer only) | Broke each of 20 rules on purpose and ran the tests | 19 of 20 caught at first; the off-by-one underpayment got a new test, now 20 of 20 |
 | 5 | Nov 11 | Real-mint end to end | Go/No-Go on testnut.cashu.space (cdk-mintd 0.18.1): offline green with the network off, replay, relabelled mint, edited amount, attacker-mint signatures, wrong lock, real refund-path token; online, the mint refuses the customer's spends and accepts the trader's; after review #7, part payments and the fee too | 20 of 20 |
 | 6 | Nov 11 | Curve math | Official Cashu vectors: NUT-00 hash_to_curve, NUT-12 hash_e, BlindSignature and Proof DLEQ; tampered and invalid inputs | pass; invalid inputs return false, never throw |
 | 7 | Nov 11 | Independent review | A fresh reviewer (a separate Claude agent that didn't write the code) read the rule layer, curve layer and Go/No-Go looking for false greens, lost money and hangs, and probed each finding with scratch inputs | no false green for ecash the mint didn't sign or the payer could take back; 2 high, 2 medium and several low findings around replays, part payments and mint limits, below |
@@ -25,7 +25,7 @@ What it can't promise offline: that the mint stays honest and solvent (custodial
 | 11 | Nov 16 | Independent review of the app | A fresh reviewer (a separate Claude agent that didn't write the code) read everything built since Nov 11 (the app, storage, receipt codec, pay, collect, keys, PIN, pay link, service worker, headers) looking for false greens, lost money, injection and privacy leaks, and probed pure functions with hostile inputs | 1 critical, 4 high, 2 medium, 2 low, a few info; all fixed or stated, below. Confirmed sound: no untrusted text reaches HTML, strict pay-link parsing, safe short keyset ids, replay store transactions, PIN lock, CSP, service worker |
 | 12 | Nov 16 | The app in a real browser | CI runs the judge's demo on the test mint with the site's real headers, offline open, slow 3G and a real customer payment ([scripts/ui-check.mjs](../scripts/ui-check.mjs)) | 16 of 16 on every push |
 
-Still to come: a second independent review after the app exists, and the privacy pass (no personal data, no cookies, no third-party scripts).
+Both independent reviews (#7 and #11) were done by separate Claude agents that hadn't written the code, not by people; a human security review is still to come. The privacy pass is in the [privacy page](https://sealpay-beta.vercel.app/privacy) and review #11.
 
 ## The trader's PIN, plainly
 

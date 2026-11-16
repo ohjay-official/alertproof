@@ -393,6 +393,8 @@ function restore(): void {
 let typed = '';
 
 function priceScreen(): void {
+  // The demo's network switch only matters for the check itself: leaving the verdict turns it back on.
+  networkOff = false;
   const p = profile!;
   const amount = h('p', { class: 'amount', 'aria-live': 'polite' });
   const sub = h('p', { class: 'sub' });
@@ -548,6 +550,7 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
     ? [
         button('Demo: show it again', () => void check(lastReceipt, requested, shownFiat), 'quiet'),
         button('Demo: try a faked receipt', () => void check(editReceipt(lastReceipt), requested, shownFiat), 'quiet'),
+        h('a', { class: 'link center', href: '#sales' }, 'Sales'),
       ]
     : [];
   const offlineLine = p.demo
@@ -672,6 +675,7 @@ async function demoCustomer(requested: number, shownFiat: number | null): Promis
 // ------------------------------------------------------------ sales, collect, cash out
 
 async function salesScreen(flash?: string): Promise<void> {
+  networkOff = false;
   const p = profile!;
   const all = (await store.sales()).sort((a, b) => b.at - a.at);
   const today = new Date().toDateString();

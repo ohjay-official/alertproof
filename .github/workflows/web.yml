@@ -104,7 +104,9 @@ jobs:
             printf '%s %s\n' "$(curl -sS -o /dev/null -w '%{http_code}' "$URL$P" 2>&1)" "$P"
           done | tee web-out/checks.txt
           # The site sets no cookies; fail if any response does.
-          if curl -sSI "$URL/" | grep -i '^set-cookie:'; then echo "a response set a cookie" | tee -a web-out/checks.txt; exit 1; fi
+          for P in / /app /pay /privacy /terms /sw.js /assets/app.js; do
+            if curl -sSI "$URL$P" | grep -i '^set-cookie:'; then echo "a response set a cookie on $P" | tee -a web-out/checks.txt; exit 1; fi
+          done
           curl -sSI "$URL/" > web-out/headers.txt
           echo "{\"deployed\":true,\"commit\":\"${GITHUB_SHA}\",\"fingerprint\":\"${{ steps.decide.outputs.fingerprint }}\",\"url\":\"$URL\",\"at\":\"$(date -u +%FT%TZ)\"}" > web-out/status.json
           cat web-out/status.json

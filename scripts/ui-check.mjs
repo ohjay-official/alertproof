@@ -139,8 +139,8 @@ try {
     await shot('verdict-not-paid');
     return await page.locator('.v-line').first().textContent();
   });
-  await step('sales screen lists the sale', async () => {
-    await page.goto(`${base}/app#sales`);
+  await step('sales screen lists the sale (tapped, no reload)', async () => {
+    await page.getByRole('link', { name: 'Sales' }).click();
     await page.getByRole('heading', { name: 'Today' }).waitFor();
     await page.locator('.sales li').first().waitFor();
     await shot('sales');
@@ -176,8 +176,8 @@ try {
     const pg = await ctx.newPage();
     let ms = 0;
     const bytes = await measureBytes(pg, async (cdp) => {
-      // Chrome's "Slow 3G" preset: 400 ms latency, about 400 kbit/s each way
-      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 400, downloadThroughput: 50_000, uploadThroughput: 50_000 });
+      // Chrome DevTools' "Slow 3G" preset: 2,000 ms latency, about 400 kbit/s each way
+      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 2000, downloadThroughput: 50_000, uploadThroughput: 50_000 });
       const t0 = Date.now();
       await pg.goto(`${base}/app`);
       await pg.getByRole('button', { name: 'Try the demo' }).waitFor({ timeout: 60_000 });
