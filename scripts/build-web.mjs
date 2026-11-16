@@ -8,6 +8,7 @@
  */
 import { build } from 'esbuild';
 import { readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 
@@ -28,6 +29,19 @@ const result = await build({
   metafile: true,
   logLevel: 'warning',
 });
+
+// The service worker: everything a trader needs to open the app with no data.
+{
+  const shell = ['/app', '/pay', '/app.css', '/favicon.svg', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
+  const built = readdirSync(out).filter((f) => f.endsWith('.js')).map((f) => `/assets/${f}`);
+  const files = [...shell, ...built];
+  const hash = createHash('sha256');
+  for (const f of ['web/public/app.html', 'web/public/pay.html', 'web/public/app.css', ...built.map((b) => 'web/public' + b)]) hash.update(readFileSync(f));
+  const version = 'sealpay-' + hash.digest('hex').slice(0, 12);
+  const sw = readFileSync('web/src/sw-template.js', 'utf8').replace('__VERSION__', version).replace('__FILES__', JSON.stringify(files));
+  writeFileSync('web/public/sw.js', sw);
+  console.log(`service worker ${version}: ${files.length} files`);
+}
 
 const gz = (file) => gzipSync(readFileSync(file), { level: 9 }).length;
 const files = readdirSync(out).filter((f) => f.endsWith('.js'));

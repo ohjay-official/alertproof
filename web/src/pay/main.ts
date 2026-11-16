@@ -14,6 +14,7 @@ import { encodeReceipt } from '../../../src/wallet/receipt.ts';
 import { formatFiat } from '../../../src/wallet/rates.ts';
 import { normalizeMintUrl } from '../../../src/verify/mint-url.ts';
 import type { CachedKeyset } from '../../../src/verify/types.ts';
+import { keepOffline } from '../shared/offline.ts';
 import { busy, button, explain, h, note, sats, screen, show } from '../shared/dom.ts';
 import { animatedQr, qrSvg } from '../shared/qr.ts';
 import { MINTS } from '../shared/config.ts';
@@ -168,6 +169,7 @@ function receipt(s: Saved): void {
   );
 }
 
+keepOffline();
 window.addEventListener('hashchange', () => {
   window.clearTimeout(polling);
   start();

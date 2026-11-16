@@ -4,3 +4,4 @@ dist/
 go-no-go.json
 ci-out/
 web/public/assets/
+web/public/sw.js

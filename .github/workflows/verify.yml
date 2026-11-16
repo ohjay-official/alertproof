@@ -85,6 +85,10 @@ jobs:
             echo
           } | tee ci-out/probe.log
 
+      - name: Probe public mainnet mints for the real-money test
+        continue-on-error: true
+        run: node scripts/probe-mints.mjs ci-out/mints.json 2>&1 | tee ci-out/mints.log
+
       - name: Go/No-Go on the test mint
         id: gonogo
         continue-on-error: true

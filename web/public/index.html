@@ -4,19 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sealpay: payments a fake alert can't fake</title>
-  <meta name="description" content="Market traders confirm Bitcoin payments in one scan, even with no data on their phone. Built for Dakar Bitcoin Hack 2026.">
+  <meta name="description" content="For market traders and POS agents: scan the customer's receipt and your phone says Paid or Not paid in under a second, even with no data. Bitcoin, Lightning and Cashu ecash.">
   <meta name="theme-color" content="#0f3d2e">
+  <link rel="canonical" href="https://sealpay-beta.vercel.app/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Sealpay: payments a fake alert can't fake">
+  <meta property="og:description" content="Scan the customer's receipt. Your phone says Paid or Not paid, even with no data.">
+  <meta property="og:url" content="https://sealpay-beta.vercel.app/">
+  <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
+  <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/styles.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sealpay","applicationCategory":"FinanceApplication","operatingSystem":"Android, iOS (web app)","url":"https://sealpay-beta.vercel.app/","description":"Market traders confirm Bitcoin payments in one scan, even with no data on their phone.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body>
   <main>
     <p class="mark">Sealpay</p>
     <h1>Payments a fake alert can't fake.</h1>
-    <p class="lead">A trader scans the customer's receipt and their phone says "Paid" or "Not paid" in under a second, with no data. The payment is signed by the mint and locked so only the trader can spend it.</p>
-    <p class="status">Built for Dakar Bitcoin Hack 2026. Try it on fake sats: one phone plays both the trader and the customer.</p>
-    <p><a class="button" href="/app#demo">Try the demo</a></p>
-    <p><a href="/app">Open the trader app</a> · <a href="https://github.com/ohjay-official/sealpay">Code and progress</a></p>
+    <p class="lead">For market traders and POS agents. The customer pays from any Lightning wallet and shows you a receipt. You scan it, and your phone says <strong>Paid</strong> or <strong>Not paid</strong> in under a second, even with no data.</p>
+    <p><a class="button" href="/app#demo">Try the demo (fake sats)</a></p>
+    <p class="links"><a href="/app">Open the trader app</a></p>
+
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li>Type the price in naira or CFA and show your pay code.</li>
+      <li>The customer scans it and pays from their own Lightning wallet. They get a receipt.</li>
+      <li>You scan their receipt. Your phone checks it by itself, with no internet.</li>
+    </ol>
+
+    <h2>Why a fake can't pass</h2>
+    <ul class="why">
+      <li>The receipt is signed by the mint. An edited amount or a made-up receipt fails the check.</li>
+      <li>The money is locked to your key. The customer can't take it back or spend it elsewhere.</li>
+      <li>Your phone remembers every receipt. Showing one twice says "Already used".</li>
+      <li>Only your own phone's check counts. A screenshot or an alert on the customer's phone means nothing.</li>
+    </ul>
+
+    <footer>
+      <p>Built for Dakar Bitcoin Hack 2026. <a href="https://github.com/ohjay-official/sealpay">Code</a>, <a href="/privacy">privacy</a>, <a href="/terms">terms</a>.</p>
+    </footer>
   </main>
 </body>
 </html>

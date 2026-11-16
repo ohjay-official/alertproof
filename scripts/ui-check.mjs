@@ -18,7 +18,7 @@ const outDir = process.argv[2] ?? 'ci-out/shots';
 mkdirSync(outDir, { recursive: true });
 const root = 'web/public';
 const vercel = JSON.parse(readFileSync('web/vercel.json', 'utf8'));
-const headers = Object.fromEntries(vercel.headers[0].headers.map((x) => [x.key, x.value]));
+const headers = Object.fromEntries(vercel.headers.find((x) => x.source === '/(.*)').headers.map((x) => [x.key, x.value]));
 // The local server is http, so this rule would push requests to https.
 headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace('; upgrade-insecure-requests', '');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain' };
@@ -65,6 +65,13 @@ async function step(name, fn) {
 }
 
 try {
+  await step('home, privacy and terms pages load', async () => {
+    for (const [path, text] of [['/', "Payments a fake alert can't fake."], ['/privacy', 'no cookies'], ['/terms', 'as is']]) {
+      await page.goto(`${base}${path}`);
+      await page.getByText(text, { exact: false }).first().waitFor();
+    }
+    await shot('home');
+  });
   await step('welcome screen loads', async () => {
     await page.goto(`${base}/app`);
     await page.getByRole('button', { name: 'Try the demo' }).waitFor();
@@ -121,6 +128,19 @@ try {
     await page.getByRole('button', { name: 'Confirm' }).click();
     await page.getByText('Collected', { exact: false }).waitFor({ timeout: 30_000 });
     await shot('collected');
+  });
+  await step('the app opens and makes a pay code with no data at all', async () => {
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await page.reload();
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await context.setOffline(true);
+    await page.goto(`${base}/app`);
+    await page.getByText('Works with no data.').waitFor({ timeout: 15_000 });
+    for (const k of ['5', '00']) await page.getByRole('button', { name: k, exact: true }).click();
+    await page.getByRole('button', { name: 'Show pay code' }).click();
+    await page.locator('.qr svg').waitFor();
+    await shot('offline-pay-code');
+    await context.setOffline(false);
   });
   await step('customer pay page opens from a pay link', async () => {
     const key = '02' + 'ab'.repeat(32);

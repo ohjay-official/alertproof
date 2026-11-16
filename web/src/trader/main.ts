@@ -8,7 +8,7 @@
  * Demo mode makes a test trader on fake sats and lets one phone play both
  * sides, with a switch that cuts the network to show the check needs none.
  */
-import { acceptReceipt, REASON_EN, type Proof, type TrustedMint, type Verdict } from '../../../src/verify/index.ts';
+import { acceptReceipt, type Proof, type TrustedMint, type Verdict } from '../../../src/verify/index.ts';
 import { nobleCurve } from '../../../src/verify/curve-noble.ts';
 import { fetchTrustedMint } from '../../../src/wallet/mint-cache.ts';
 import { decodeReceipt, encodeReceipt } from '../../../src/wallet/receipt.ts';
@@ -22,11 +22,13 @@ import { finishPayment, paymentState, pickKeyset, startPayment } from '../../../
 import { cashOut, collect } from '../../../src/wallet/collect.ts';
 import { sumAmounts } from '../../../src/wallet/ecash.ts';
 import { IdbStore, keepStorage, openDb, type Sale } from '../../../src/app/idb-store.ts';
+import { keepOffline } from '../shared/offline.ts';
 import { busy, button, explain, h, note, sats, screen, show } from '../shared/dom.ts';
 import { animatedQr, qrSvg } from '../shared/qr.ts';
 import { startScanner } from '../shared/scan.ts';
 import { signalNotPaid, signalPaid, unlockAudio } from '../shared/signal.ts';
 import { MINTS, TEST_MINT } from '../shared/config.ts';
+import { words, type Lang } from '../shared/i18n.ts';
 
 interface Profile {
   v: 1;
@@ -37,6 +39,8 @@ interface Profile {
   locked: LockedSeed;
   mint: TrustedMint;
   rates: Rates | null;
+  /** language of the verdict and the spoken result; older profiles have none (English) */
+  lang?: Lang;
 }
 
 const DEMO_PIN = '1234';
@@ -59,7 +63,7 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 // ------------------------------------------------------------ helpers
 
 const fiat = (n: number) => formatFiat(n, profile?.currency ?? 'NGN');
-const speakFiat = (n: number) => `${Math.round(n).toLocaleString('en-US')} ${profile?.currency === 'XOF' ? 'francs' : 'naira'}`;
+const speakFiat = (n: number) => `${Math.round(n)} ${words(profile?.lang ?? 'en').unitWord(profile?.currency ?? 'NGN')}`;
 
 async function saveProfile(p: Profile): Promise<void> {
   profile = p;
@@ -125,6 +129,24 @@ function welcome(): void {
 
 function setupShop(restoreSeed?: Uint8Array): void {
   let currency: Currency = 'NGN';
+  let lang: Lang = 'en';
+  const langChoice = h(
+    'div',
+    { class: 'choice', role: 'radiogroup', 'aria-label': 'Language' },
+    ...(['en', 'fr'] as const).map((l) =>
+      h('button', {
+        type: 'button',
+        role: 'radio',
+        'data-lang': l,
+        'aria-checked': String(l === lang),
+        onclick: () => setLang(l),
+      }, l === 'en' ? 'English' : 'Français'),
+    ),
+  );
+  const setLang = (l: Lang) => {
+    lang = l;
+    for (const b of langChoice.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.getAttribute('data-lang') === l));
+  };
   const name = h('input', { id: 'shop', maxlength: '40', autocomplete: 'organization', placeholder: "e.g. Mama Nkechi's Fabrics" });
   const money = h(
     'div',
@@ -137,6 +159,7 @@ function setupShop(restoreSeed?: Uint8Array): void {
         onclick: (e: Event) => {
           currency = c;
           for (const b of money.querySelectorAll('button')) b.setAttribute('aria-checked', String(b === e.currentTarget));
+          setLang(c === 'XOF' ? 'fr' : 'en');
         },
       }, c === 'NGN' ? 'Naira (₦)' : 'CFA'),
     ),
@@ -152,8 +175,8 @@ function setupShop(restoreSeed?: Uint8Array): void {
       try {
         const [mint, rates] = await Promise.all([fetchTrustedMint(MINTS[0]!.url), fetchRates().catch(() => null)]);
         const seed = restoreSeed ?? newSeed();
-        if (restoreSeed) await choosePin(seed, { shop, currency, mint, rates });
-        else showCode(seed, { shop, currency, mint, rates });
+        if (restoreSeed) await choosePin(seed, { shop, currency, mint, rates, lang });
+        else showCode(seed, { shop, currency, mint, rates, lang });
       } catch (err) {
         msg.replaceChildren(note(`${explain(err)} Setup needs data once.`, 'error'));
       }
@@ -167,6 +190,8 @@ function setupShop(restoreSeed?: Uint8Array): void {
         name,
         h('p', { class: 'label' }, 'Prices in'),
         money,
+        h('p', { class: 'label' }, 'Language for Paid / Not paid'),
+        langChoice,
         h('p', { class: 'label' }, 'Mint (holds the money until you cash out)'),
         h('p', { class: 'mintline' }, MINTS[0]!.label),
         msg,
@@ -177,7 +202,7 @@ function setupShop(restoreSeed?: Uint8Array): void {
   name.focus();
 }
 
-type Draft = { shop: string; currency: Currency; mint: TrustedMint; rates: Rates | null };
+type Draft = { shop: string; currency: Currency; mint: TrustedMint; rates: Rates | null; lang: Lang };
 
 function showCode(seed: Uint8Array, d: Draft): void {
   const check = h('input', { type: 'checkbox', id: 'wrote' });
@@ -229,7 +254,7 @@ async function choosePin(seed: Uint8Array, d: Draft): Promise<void> {
 
 async function finishSetup(seed: Uint8Array, d: Draft, pin: string, demo: boolean): Promise<void> {
   const locked = await lockSeed(seed, pin);
-  await saveProfile({ v: 1, shop: d.shop, currency: d.currency, demo, pub: traderKey(seed).pub, locked, mint: d.mint, rates: d.rates });
+  await saveProfile({ v: 1, shop: d.shop, currency: d.currency, demo, pub: traderKey(seed).pub, locked, mint: d.mint, rates: d.rates, lang: d.lang });
   void keepStorage();
   location.hash = '#price';
   route();
@@ -240,7 +265,7 @@ async function setupDemo(): Promise<void> {
   show(screen({ body: [h('p', { class: 'lead' }, 'Setting up a demo stall on the test mint…')] }));
   try {
     const [mint, rates] = await Promise.all([fetchTrustedMint(TEST_MINT), fetchRates().catch(() => null)]);
-    await finishSetup(newSeed(), { shop: 'Demo Stall', currency: 'NGN', mint, rates }, DEMO_PIN, true);
+    await finishSetup(newSeed(), { shop: 'Demo Stall', currency: 'NGN', mint, rates, lang: 'en' }, DEMO_PIN, true);
   } catch (err) {
     show(screen({ body: [note(`${explain(err)} The demo needs data to start.`, 'error')], actions: [button('Back', () => welcome())] }));
   }
@@ -403,6 +428,8 @@ async function check(text: string, requested: number | null, shownFiat: number |
 
 function verdict(v: Verdict, requested: number | null, shownFiat: number | null, proof: { ms: number; requests: number }): void {
   const p = profile!;
+  const lang = p.lang ?? 'en';
+  const W = words(lang);
   const again = p.demo && lastReceipt
     ? [
         button('Demo: show it again', () => void check(lastReceipt, requested, shownFiat), 'quiet'),
@@ -411,23 +438,23 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
     : [];
   const offlineLine = p.demo
     ? `Checked on this phone in ${proof.ms} ms${networkOff ? ` with the network off (${proof.requests} requests)` : ''}.`
-    : 'Checked on this phone. No internet needed.';
+    : W.checkedOffline;
 
   if (v.ok) {
     const lands = v.totalSats - v.feeSats;
     const shown = shownFiat ?? (p.rates ? satsToFiat(lands, p.currency, p.rates) : null);
-    signalPaid(shown ? `Paid. ${speakFiat(shown)}.` : `Paid. ${lands} sats.`);
+    signalPaid(W.sayPaid(shown ? speakFiat(shown) : `${lands} sats`), lang);
     show(
       screen({
         tone: 'ok',
         body: [
-          h('p', { class: 'stamp' }, 'Paid'),
+          h('p', { class: 'stamp' }, W.paid),
           h('p', { class: 'v-amount' }, shown ? fiat(shown) : sats(lands)),
-          h('p', { class: 'v-line' }, `${sats(lands)}, locked to you`),
-          v.overpaidSats > 0 ? h('p', { class: 'v-line' }, `${sats(v.overpaidSats)} more than you asked.`) : null,
+          h('p', { class: 'v-line' }, W.lockedToYou(sats(lands))),
+          v.overpaidSats > 0 ? h('p', { class: 'v-line' }, W.moreThanAsked(sats(v.overpaidSats))) : null,
           h('p', { class: 'v-note' }, offlineLine),
         ],
-        actions: [button('Next sale', () => { typed = ''; priceScreen(); }), ...again],
+        actions: [button(W.nextSale, () => { typed = ''; priceScreen(); }), ...again],
       }),
     );
     return;
@@ -438,34 +465,34 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
     const shortSats = requested - lands;
     const got = p.rates ? fiat(satsToFiat(lands, p.currency, p.rates)) : sats(lands);
     const short = p.rates ? fiat(satsToFiat(shortSats, p.currency, p.rates)) : sats(shortSats);
-    signalNotPaid(`Part paid. Ask for ${p.rates ? speakFiat(satsToFiat(shortSats, p.currency, p.rates)) : `${shortSats} sats`} more.`);
+    signalNotPaid(W.sayAskMore(p.rates ? speakFiat(satsToFiat(shortSats, p.currency, p.rates)) : `${shortSats} sats`), lang);
     show(
       screen({
         tone: 'part',
         body: [
-          h('p', { class: 'stamp' }, 'Part paid'),
-          h('p', { class: 'v-head' }, `Got ${got}. Ask for ${short} more.`),
-          h('p', { class: 'v-line' }, 'This part is kept and is yours. Hold the goods until the rest is paid.'),
+          h('p', { class: 'stamp' }, W.part),
+          h('p', { class: 'v-head' }, W.gotAskMore(got, short)),
+          h('p', { class: 'v-line' }, W.partKept),
           h('p', { class: 'v-note' }, offlineLine),
         ],
-        actions: [button('Ask for the rest', () => payCode(Math.max(1, p.rates ? Math.ceil(satsToFiat(shortSats, p.currency, p.rates)) : shortSats))), button('Done', () => priceScreen(), 'quiet')],
+        actions: [button(W.askRest, () => payCode(Math.max(1, p.rates ? Math.ceil(satsToFiat(shortSats, p.currency, p.rates)) : shortSats))), button(W.done, () => priceScreen(), 'quiet')],
       }),
     );
     return;
   }
 
   const used = v.code === 'already_received';
-  signalNotPaid(used ? 'Already used. Do not release the goods.' : 'Not paid. Do not release the goods.');
+  signalNotPaid(used ? W.sayUsed : W.sayNotPaid, lang);
   show(
     screen({
       tone: 'no',
       body: [
-        h('p', { class: 'stamp' }, used ? 'Already used' : 'Not paid'),
-        h('p', { class: 'v-head' }, used ? 'This receipt was scanned before.' : "Don't release the goods."),
-        h('p', { class: 'v-line' }, REASON_EN[v.code]),
-        h('p', { class: 'v-note' }, used ? 'The money for it came in once, the first time it was scanned.' : 'Whatever the customer’s screen says, this phone checked the receipt itself.'),
+        h('p', { class: 'stamp' }, used ? W.used : W.notPaid),
+        h('p', { class: 'v-head' }, used ? W.scannedBefore : W.dontRelease),
+        h('p', { class: 'v-line' }, W.reason(v.code)),
+        h('p', { class: 'v-note' }, used ? W.cameOnce : W.screenSays),
       ],
-      actions: [button('Scan again', () => scanScreen(requested, shownFiat)), button('New sale', () => priceScreen(), 'quiet'), ...again],
+      actions: [button(W.scanAgain, () => scanScreen(requested, shownFiat)), button(W.newSale, () => priceScreen(), 'quiet'), ...again],
     }),
   );
 }
@@ -682,4 +709,5 @@ async function boot(): Promise<void> {
   void refreshInBackground();
 }
 
+keepOffline();
 void boot();

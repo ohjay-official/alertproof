@@ -55,3 +55,10 @@ h1 {
 }
 
 .button:focus-visible { outline: 3px solid var(--ok); outline-offset: 3px; }
+
+h2 { font-size: 1.35rem; margin: 2.2rem 0 .6rem; }
+.mark a { color: inherit; text-decoration: none; }
+.links a, footer a, main a:not(.button) { color: var(--brand); font-weight: 600; }
+.steps, .why { padding-left: 1.3rem; margin: 0; }
+.steps li, .why li { margin: 0 0 .6rem; }
+footer { margin-top: 3rem; border-top: 1px solid #d6dcd8; padding-top: 1rem; color: var(--muted); font-size: 16px; }

@@ -100,7 +100,7 @@ jobs:
         run: |
           URL=$(cat web-out/domain.txt)
           echo "Production: $URL"
-          for P in / /app /pay /app.css /assets/app.js /assets/pay.js /404 /styles.css /favicon.svg /robots.txt /no-such-page; do
+          for P in / /app /pay /privacy /terms /sitemap.xml /manifest.webmanifest /sw.js /og.png /icons/icon-192.png /app.css /assets/app.js /assets/pay.js /404 /styles.css /favicon.svg /robots.txt /no-such-page; do
             printf '%s %s\n' "$(curl -sS -o /dev/null -w '%{http_code}' "$URL$P" 2>&1)" "$P"
           done | tee web-out/checks.txt
           # The site sets no cookies; fail if any response does.
