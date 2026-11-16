@@ -17,7 +17,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 | Nov 12 end | Core verifier solid, Go/No-Go passes on the test mint | **GO on Nov 11** (18/18 on testnut.cashu.space); review passes continue |
 | Nov 12 | Live URL (placeholder is fine) | **live Nov 16: https://sealpay-beta.vercel.app** (sealpay.vercel.app was taken); every page checked, no cookies |
 | Nov 15 | App's money logic (pay, collect, cash out, keys, PIN, pay link, rates, QR frames) | **done**: 114 tests, Go/No-Go 21/21 on testnut running the app's own code |
-| Nov 16 to 19 | Screens, trader visits (5 by Nov 17), real-money proof, README, film | screens: mockup sent Nov 15, waiting for his OK on the look |
+| Nov 16 to 19 | Screens, trader visits (5 by Nov 17), real-money proof, README, film | **app live Nov 16 07:37**: all screens, demo, 12/12 browser run on testnut; first load 42.7 KB. Next: his phone test, then trader visits |
 | Nov 19 | Everything frozen except fixes | |
 | Nov 20 midday | Submit once | |
 
@@ -40,11 +40,13 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 - Nov 15: Animated receipt QR uses its own small frame format (`AP1:n/total:check:part`, about 280 characters a frame); a short receipt stays one plain cashuB QR any Cashu wallet reads.
 - Nov 15: Per-sale lock keys (review #7's medium finding) deferred to next steps: screens, trader visits and the live link come first.
 - Nov 16: Renamed to Sealpay everywhere in the repo (no payments brand by that name found). Key derivation domain is now "Sealpay trader key v1" (no real keys existed yet). Repo renamed to ohjay-official/sealpay by his agent (Grokbot) on Nov 16; old links redirect.
+- Nov 16: App built: web/src (trader, pay, shared), esbuild in CI, CSP opened only to testnut and CoinGecko, camera allowed for self. Own cashuB codec (src/wallet/cashub.ts) replaces cashu-ts in the app: first load 77.5 KB -> 42.7 KB. cashu-ts stays as a dev dependency for compatibility tests.
+- Nov 16: CI runs the demo in a real browser on testnut (scripts/ui-check.mjs) with the site's real headers; screenshots on verify-results/shots.
 - Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
 
 ## CHECK IN (open)
 
-- Nov 15: mockup of the six main screens sent (POS-style keypad, full-screen green/red verdict with a "Paid" stamp, no web fonts; [docs/design](../design)). Waiting for his reaction before building the UI.
+- Nov 16: he said "start work" without commenting on the mockup; built to the mockup look. He should open the live app on his phone and react.
 
 ## HIS CALL (open)
 
@@ -67,6 +69,6 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 
 ## Next step
 
-1. Get his reaction to the screen mockup (CHECK IN) and the VERCEL_TOKEN (HIS CALL).
-2. Then the app shell: esbuild in CI, `web/src`, CSP opened only to the trusted mints and the price API. Trader: setup (shop, mint, key, recovery code, PIN), ask (keypad, rate), pay code QR, scan (BarcodeDetector, lazy fallback for iPhone), verdict screen (voice, buzz), IndexedDB store, collect and cash out. Customer: pay page with the invoice, then the animated receipt QR. Demo mode on testnut for judges.
-3. Playwright in CI: the whole flow in a real browser against testnut, with the trader's network switched off; screenshots to the results branch.
+1. Oh-Jay opens https://sealpay-beta.vercel.app/app#demo on his Android and iPhone and reacts (CHECK IN). Confirm Devpost registration (Grokbot is on it).
+2. Then: service worker so the app opens with no data, French verdicts, slow-3G timing and data cost, real mint for the real-money test, trader visits (Nov 17).
+3. See CHECKLIST.md for everything after.

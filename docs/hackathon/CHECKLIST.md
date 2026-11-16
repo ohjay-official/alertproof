@@ -11,6 +11,7 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 - [x] Screen mockup (Nov 15)
 - [x] Renamed to Sealpay, repo ohjay-official/sealpay (Nov 16)
 - [x] Live link: https://sealpay-beta.vercel.app (Nov 16)
+- [x] The app, live: trader screens, customer pay page, demo mode; 12/12 in a real browser on the test mint (Nov 16)
 
 ## 1. Calls only Oh-Jay can make (Nov 16 morning)
 
@@ -23,30 +24,31 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 
 ## 2. Build the app (Nov 16 to 17), Claude
 
-- [ ] Build step in CI (esbuild), app code in `web/src`, deploy the built app instead of the placeholder
-- [ ] Open the site's security rules (CSP) only to the test mint, the real mint and the price service
-- [ ] QR drawing, and QR scanning (phone's built-in scanner, with a backup loaded only on iPhones)
-- [ ] Trader setup: shop name, naira or CFA, mint picked for them, key made, recovery code shown and confirmed, PIN
-- [ ] Trader setup saves the mint's keys and today's rate for offline use
-- [ ] Price screen: POS-style keypad, naira to sats, rate age shown
-- [ ] Pay code screen: QR of the pay link, shop name, amount
-- [ ] Scan screen: camera, collects the animated receipt QR, shows progress
-- [ ] Verdict screens: green Paid, red Not paid, red Already used, amber Part paid; phone speaks it, buzzes and beeps
-- [ ] Saved sales on the phone (replay list and payments saved together, storage kept from being wiped)
-- [ ] Sales list and end-of-day summary, shared as plain text to WhatsApp
-- [ ] Collect button (asks the PIN) and Cash out to a Lightning invoice
-- [ ] Restore a trader from the recovery code
-- [ ] Customer pay page: shop and amount, Lightning invoice QR, Open wallet, Copy invoice, waits for payment
-- [ ] Customer receipt: animated QR, saved on their phone, survives a page reload
-- [ ] Demo mode for judges: one tap makes a test trader on fake sats, pays itself, and hands the receipt to the trader side, with a clear "network off" switch
+- [x] Build step in CI (esbuild), app code in `web/src`, deploy the built app instead of the placeholder
+- [x] Open the site's security rules (CSP) only to the test mint, the real mint and the price service
+- [x] QR drawing, and QR scanning (phone's built-in scanner, with a backup loaded only on iPhones)
+- [x] Trader setup: shop name, naira or CFA, mint picked for them, key made, recovery code shown and confirmed, PIN
+- [x] Trader setup saves the mint's keys and today's rate for offline use
+- [x] Price screen: POS-style keypad, naira to sats, rate age shown
+- [x] Pay code screen: QR of the pay link, shop name, amount
+- [x] Scan screen: camera, collects the animated receipt QR, shows progress
+- [x] Verdict screens: green Paid, red Not paid, red Already used, amber Part paid; phone speaks it, buzzes and beeps
+- [x] Saved sales on the phone (replay list and payments saved together, storage kept from being wiped)
+- [x] Sales list and end-of-day summary, shared as plain text to WhatsApp
+- [x] Collect button (asks the PIN) and Cash out to a Lightning invoice
+- [x] Restore a trader from the recovery code
+- [x] Customer pay page: shop and amount, Lightning invoice QR, Open wallet, Copy invoice, waits for payment
+- [x] Customer receipt: animated QR, saved on their phone, survives a page reload
+- [x] Demo mode for judges: one tap makes a test trader on fake sats, pays itself, and hands the receipt to the trader side, with a clear "network off" switch
 - [ ] Works as an app: install to home screen, opens with no data after the first visit
 - [ ] French for the verdict and the spoken result (Senegal judges)
 - [ ] **CHECK IN**: Oh-Jay opens the live app on his phone and tries it
 
 ## 3. Prove it works (Nov 17 to 18)
 
-- [ ] **Claude**: browser test in CI of the whole journey on the test mint, trader's network off, screenshots saved
-- [ ] **Claude**: measure first-load size (budget 60 KB), data cost per payment in naira, and a slow-3G load time, in CI
+- [x] **Claude**: browser test in CI of the whole journey on the test mint, trader's network off, screenshots saved
+- [x] **Claude**: measure first-load size in CI: trader 42.7 KB, customer 33.6 KB gzipped (budget 60 KB)
+- [ ] **Claude**: data cost per payment in naira, and a slow-3G load time, in CI
 - [ ] **Claude**: one command, `npm run verify`, prints PASS or FAIL for everything, including the above
 - [ ] **Oh-Jay**: test on your Android and your iPhone, send screenshots of anything odd
 - [ ] **Oh-Jay**: 2 or 3 friends try it; **Claude** fixes what they hit

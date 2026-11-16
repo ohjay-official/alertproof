@@ -32,3 +32,6 @@ All code in this repo is written with AI (Claude), directed and reviewed by the 
 ## Nov 16, 2026
 
 - Renamed the product from AlertProof to Sealpay across the code, docs and site.
+- The app: trader setup, POS keypad, pay code, camera scan of animated receipts, full-screen verdicts with tone, buzz and voice, sales, collect and cash out; customer pay page; demo mode with a network switch. Live at https://sealpay-beta.vercel.app.
+- CI now builds the app and runs the whole demo in a real browser on the test mint: 12 of 12, Paid checked in 17 ms with the network off and 0 requests.
+- Own cashuB reader and writer replaced the Cashu library in the app: first load 77.5 KB to 42.7 KB gzipped (budget 60 KB). 120 tests; Go/No-Go 21 of 21.
