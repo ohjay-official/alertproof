@@ -20,7 +20,7 @@ const result = await build({
   bundle: true,
   splitting: true,
   format: 'esm',
-  target: ['es2020', 'safari14', 'chrome90'],
+  target: 'es2020',
   minify: true,
   sourcemap: false,
   legalComments: 'none',

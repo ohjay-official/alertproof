@@ -42,7 +42,10 @@ export async function startScanner(video: HTMLVideoElement, onText: (text: strin
     const d = native;
     read = async () => (await d.detect(video)).map((c) => c.rawValue);
   } else {
-    const { default: jsQR } = await import('jsqr');
+    // jsqr ships as a CommonJS bundle; its function sits at .default or .default.default
+    const mod: any = await import('jsqr');
+    const jsQR: (data: Uint8ClampedArray, w: number, h: number, opts?: object) => { data: string } | null =
+      typeof mod.default === 'function' ? mod.default : typeof mod.default?.default === 'function' ? mod.default.default : mod;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
     read = async () => {
