@@ -77,8 +77,8 @@ input, textarea { width: 100%; font-family: inherit; font-size: 18px; line-heigh
 .verdict.ok { background: var(--paid); }
 .verdict.no { background: var(--stop); }
 .verdict.part { background: var(--part); color: var(--ink); }
-.stamp { margin: 64px 0 0 6px; align-self: flex-start; border: 7px solid currentColor; border-radius: 16px; padding: 2px 22px 8px; transform: rotate(-5deg); font-weight: 900; font-size: 80px; line-height: 1; letter-spacing: -0.03em; max-width: 92%; }
-.verdict.no .stamp, .verdict.part .stamp { font-size: 46px; white-space: nowrap; }
+.stamp { margin: 64px 0 0 6px; align-self: flex-start; border: 7px solid currentColor; border-radius: 16px; padding: 2px 22px 8px; transform: rotate(-5deg); font-weight: 900; font-size: 80px; line-height: 1; letter-spacing: -0.03em; }
+.verdict.no .stamp, .verdict.part .stamp { font-size: 40px; white-space: nowrap; }
 .v-amount { font-weight: 800; font-size: 68px; line-height: 1; margin: 46px 0 10px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .v-line { font-size: 20px; margin: 0 0 6px; }
 .v-note { font-size: 16px; opacity: .9; margin: 18px 0 0; }

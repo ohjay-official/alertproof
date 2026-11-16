@@ -99,12 +99,12 @@ try {
     return await page.locator('.v-note').textContent();
   });
   await step('same receipt again: Already used', async () => {
-    await page.getByRole('button', { name: 'Demo: scan the same receipt again' }).click();
+    await page.getByRole('button', { name: 'Demo: show it again' }).click();
     await page.locator('.verdict.no .stamp').filter({ hasText: 'Already used' }).waitFor();
     await shot('verdict-already-used');
   });
   await step('edited receipt: Not paid', async () => {
-    await page.getByRole('button', { name: 'Demo: try an edited receipt' }).click();
+    await page.getByRole('button', { name: 'Demo: try a faked receipt' }).click();
     await page.locator('.verdict.no .stamp').filter({ hasText: 'Not paid' }).waitFor();
     await shot('verdict-not-paid');
     return await page.locator('.v-line').first().textContent();

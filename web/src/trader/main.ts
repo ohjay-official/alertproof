@@ -405,8 +405,8 @@ function verdict(v: Verdict, requested: number | null, shownFiat: number | null,
   const p = profile!;
   const again = p.demo && lastReceipt
     ? [
-        button('Demo: scan the same receipt again', () => void check(lastReceipt, requested, shownFiat), 'quiet'),
-        button('Demo: try an edited receipt', () => void check(editReceipt(lastReceipt), requested, shownFiat), 'quiet'),
+        button('Demo: show it again', () => void check(lastReceipt, requested, shownFiat), 'quiet'),
+        button('Demo: try a faked receipt', () => void check(editReceipt(lastReceipt), requested, shownFiat), 'quiet'),
       ]
     : [];
   const offlineLine = p.demo
