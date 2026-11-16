@@ -125,3 +125,12 @@ test('refuses everything when our own cached key is broken', () => {
   const r = checkLock(withTags('[]'), 'not a key');
   assert.equal(r.ok, false);
 });
+
+test('audit: a lock with whitespace around it is refused, so every mint reads it the same way', () => {
+  const body = JSON.stringify(["P2PK", { nonce: "00".repeat(16), data: TRADER }]);
+  assert.deepEqual(checkLock(body, TRADER), { ok: true });
+  for (const s of [' ' + body, body + '\n', '\t' + body + '\r\n']) {
+    const r = checkLock(s, TRADER);
+    assert.equal(r.ok, false, JSON.stringify(s));
+  }
+});

@@ -73,6 +73,11 @@ export interface CheckOptions {
   requestedSats?: number;
   /** Current time in unix seconds, for keyset expiry. Defaults to the phone's clock. */
   nowSeconds?: number;
+  /**
+   * How long before a keyset's final expiry its proofs stop being green, so
+   * the trader has time to collect them. Defaults to 3 days.
+   */
+  expiryMarginSeconds?: number;
 }
 
 /**

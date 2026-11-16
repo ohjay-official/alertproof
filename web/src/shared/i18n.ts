@@ -48,6 +48,9 @@ export function words(lang: Lang) {
     newSale: fr ? 'Nouvelle vente' : 'New sale',
     askRest: fr ? 'Demander le reste' : 'Ask for the rest',
     done: fr ? 'Terminé' : 'Done',
+    restoredOnline: fr
+      ? 'Ce téléphone a été restauré : connectez-vous une fois pour qu’il puisse confirmer les reçus.'
+      : 'This phone was restored: go online so it can confirm this receipt with the mint.',
     reason: (code: FailCode) => (fr ? REASON_FR[code] : REASON_EN[code]),
     sayPaid: (amount: string) => (fr ? `Payé. ${amount}.` : `Paid. ${amount}.`),
     sayNotPaid: fr ? 'Pas payé. Ne donnez pas la marchandise.' : 'Not paid. Do not release the goods.',

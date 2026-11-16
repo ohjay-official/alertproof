@@ -54,6 +54,10 @@ export function checkLock(secret: string, traderPubkey: string): LockResult {
   if (!secret.trimStart().startsWith('[')) {
     return refuse('not_locked_to_you', 'plain secret: anyone holding it can spend it');
   }
+  // Exactly as Sealpay writes it: no whitespace around the lock, so every mint reads it the same way.
+  if (secret[0] !== '[' || secret[secret.length - 1] !== ']') {
+    return refuse('not_locked_to_you', 'lock has whitespace around it');
+  }
 
   let parsed: StrictValue;
   try {

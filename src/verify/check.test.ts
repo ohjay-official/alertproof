@@ -384,8 +384,16 @@ test('review #6: proofs from an expired keyset are refused', () => {
   const ks = { ...makeKeyset('expiring'), final_expiry: 2_000_000_000 };
   const c = ctx({ mints: [makeTrustedMint(MINT_URL, [ks])] });
   const token = makeToken(4, { ks });
-  assert.equal(checkReceipt(token, c, { nowSeconds: 1_999_999_999 }, fakeCurve).ok, true);
-  expectCode(checkReceipt(token, c, { nowSeconds: 2_000_000_000 }, fakeCurve), 'unknown_keys');
+  assert.equal(checkReceipt(token, c, { nowSeconds: 1_999_999_999, expiryMarginSeconds: 0 }, fakeCurve).ok, true);
+  expectCode(checkReceipt(token, c, { nowSeconds: 2_000_000_000, expiryMarginSeconds: 0 }, fakeCurve), 'unknown_keys');
+});
+
+test('audit: proofs from a keyset that expires before the trader can collect are refused (3-day margin)', () => {
+  const ks = { ...makeKeyset('expiring'), final_expiry: 2_000_000_000 };
+  const c = ctx({ mints: [makeTrustedMint(MINT_URL, [ks])] });
+  const token = makeToken(4, { ks });
+  assert.equal(checkReceipt(token, c, { nowSeconds: 2_000_000_000 - 4 * 86_400 }, fakeCurve).ok, true);
+  expectCode(checkReceipt(token, c, { nowSeconds: 2_000_000_000 - 2 * 86_400 }, fakeCurve), 'unknown_keys');
 });
 
 test('review #8: a forged proof with a refund tag says "not signed", not "could take it back"', () => {

@@ -168,7 +168,9 @@ try {
   await step('customer pay page opens from a pay link', async () => {
     const key = '02' + 'ab'.repeat(32);
     await page.goto(`${base}/pay#k=${key}&m=https%3A%2F%2Ftestnut.cashu.space&s=Mama+Nkechi%27s+Fabrics&a=2292&f=2000&c=NGN`);
-    await page.getByRole('button', { name: 'Pay ₦2,000' }).waitFor();
+    // The naira price shows on the button once it matches the sats at today's rate.
+    await page.getByRole('button', { name: /^Pay / }).waitFor();
+    await page.getByRole('button', { name: 'Pay ₦2,000' }).waitFor({ timeout: 15_000 }).catch(() => undefined);
     await shot('pay-page');
   });
   await step('slow 3G: the trader app is usable from a cold start', async () => {
@@ -196,12 +198,12 @@ try {
     let pageBytes = 0;
     const total = await measureBytes(pg, async () => {
       await pg.goto(`${base}/pay#k=${key}&m=https%3A%2F%2Ftestnut.cashu.space&s=Mama+Nkechi%27s+Fabrics&a=2292&f=2000&c=NGN`);
-      await pg.getByRole('button', { name: 'Pay ₦2,000' }).waitFor();
-      await new Promise((r) => setTimeout(r, 300));
+      await pg.getByRole('button', { name: /^Pay / }).waitFor();
+      await new Promise((r) => setTimeout(r, 1500));
     }).then(async (b) => {
       pageBytes = b;
       return b + (await measureBytes(pg, async () => {
-        await pg.getByRole('button', { name: 'Pay ₦2,000' }).click();
+        await pg.getByRole('button', { name: /^Pay / }).click();
         await pg.getByText('Show this to the trader').waitFor({ timeout: 60_000 });
       }));
     });

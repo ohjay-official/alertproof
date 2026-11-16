@@ -223,7 +223,7 @@ export class MemoryMint {
       // The Lightning payment itself costs nothing here, so all of the reserve comes back.
       const changeAmounts: number[] = [];
       for (let left = total - fee - q.amount, bit = 1; left > 0; bit *= 2) {
-        if (left & bit) {
+        if (Math.floor(left / bit) % 2 === 1) {
           changeAmounts.push(bit);
           left -= bit;
         }

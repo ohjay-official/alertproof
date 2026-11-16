@@ -12,6 +12,7 @@
  *   f  the same amount in naira or CFA, shown    optional, with c
  *   c  NGN or XOF                                with f
  *   h  start of the keyset id the trader cached  optional
+ *   t  when the code was made (base-36 seconds)  optional; tells two sales at one price apart
  *
  * Read strictly: the customer's page shows the shop name as plain text and
  * pays only a valid key at an https mint. Nothing here is trusted by the
@@ -28,6 +29,8 @@ export interface PayLink {
   sats?: number;
   fiat?: { amount: number; currency: Currency };
   keysetHint?: string;
+  /** when the trader made this code (base-36 seconds): tells two sales at the same price apart */
+  made?: string;
 }
 
 export const MAX_SHOP = 40;
@@ -37,13 +40,16 @@ const FIAT_RE = /^[0-9]{1,10}(\.[0-9]{1,2})?$/;
 
 /** Shop names: printable characters only, single spaces, trimmed. */
 export function cleanShopName(name: string): string {
-  return name
+  const cleaned = name
     .normalize('NFC')
     .replace(/\s+/g, ' ')
     .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '')
     .replace(/ {2,}/g, ' ')
-    .trim()
-    .slice(0, MAX_SHOP);
+    // no towers of accent marks (used to fake other letters)
+    .replace(/(\p{M}{2})\p{M}+/gu, '$1')
+    .trim();
+  // cut by whole characters, never in the middle of an emoji
+  return Array.from(cleaned).slice(0, MAX_SHOP).join('').trim();
 }
 
 export function payLinkUrl(origin: string, link: PayLink): string {
@@ -57,6 +63,7 @@ export function payLinkUrl(origin: string, link: PayLink): string {
     p.set('c', link.fiat.currency);
   }
   if (link.keysetHint) p.set('h', link.keysetHint.slice(0, 16));
+  if (link.made) p.set('t', link.made);
   return `${origin.replace(/\/+$/, '')}/pay#${p.toString()}`;
 }
 
@@ -91,6 +98,11 @@ export function parsePayLink(input: string): ParsedPayLink {
       return { ok: false, error: 'The price in this link is not valid.' };
     }
     link.fiat = { amount: Number(f), currency: c };
+  }
+  const t = p.get('t');
+  if (t !== null) {
+    if (!/^[0-9a-z]{1,12}$/.test(t)) return { ok: false, error: 'This payment link is not valid.' };
+    link.made = t;
   }
   const h = p.get('h');
   if (h !== null) {

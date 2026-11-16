@@ -55,7 +55,11 @@ export function openDb(name = DB_NAME, idb: IDBFactory = indexedDB): Promise<IDB
       if (!db.objectStoreNames.contains('sales')) db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
       if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
     };
-    r.onsuccess = () => resolve(r.result);
+    r.onsuccess = () => {
+      // Let another tab delete or upgrade the database instead of hanging it.
+      r.result.onversionchange = () => r.result.close();
+      resolve(r.result);
+    };
     r.onerror = () => reject(r.error);
     r.onblocked = () => reject(new Error('storage is busy in another tab'));
   });
@@ -152,13 +156,47 @@ export class IdbStore implements SeenStore {
 
   /**
    * Several changes in one transaction, so money never sits in two places or
-   * none: the wallet, the list of pending steps, and which sales are collected.
+   * none. The wallet and the list of pending steps are read and written
+   * inside the same transaction (no read outside it that another writer
+   * could race), and proofs are de-duplicated by secret.
    */
-  async apply(change: { kv?: Record<string, unknown>; collected?: number[]; problems?: Record<number, string> }): Promise<void> {
+  async apply(change: {
+    addProofs?: readonly Proof[];
+    removeSecrets?: readonly string[];
+    addPending?: { id: string; [k: string]: unknown };
+    removePendingId?: string;
+    updatePending?: { id: string; [k: string]: unknown };
+    kv?: Record<string, unknown>;
+    collected?: number[];
+    problems?: Record<number, string>;
+  }): Promise<void> {
     const tx = this.db.transaction(['kv', 'sales'], 'readwrite');
     const kv = tx.objectStore('kv');
     const sales = tx.objectStore('sales');
     for (const [k, v] of Object.entries(change.kv ?? {})) kv.put(v, k);
+    if (change.addProofs || change.removeSecrets) {
+      const r = kv.get('wallet');
+      r.onsuccess = () => {
+        const drop = new Set(change.removeSecrets ?? []);
+        const seen = new Set<string>();
+        const next: Proof[] = [];
+        for (const p of [...((r.result as Proof[] | undefined) ?? []), ...(change.addProofs ?? [])]) {
+          if (drop.has(p.secret) || seen.has(p.secret)) continue;
+          seen.add(p.secret);
+          next.push(p);
+        }
+        kv.put(next, 'wallet');
+      };
+    }
+    if (change.addPending || change.removePendingId || change.updatePending) {
+      const r = kv.get('pending');
+      r.onsuccess = () => {
+        let list = ((r.result as Array<{ id: string }> | undefined) ?? []).filter((o) => o.id !== change.removePendingId);
+        if (change.updatePending) list = list.map((o) => (o.id === change.updatePending!.id ? change.updatePending! : o));
+        if (change.addPending) list = [...list.filter((o) => o.id !== change.addPending!.id), change.addPending];
+        kv.put(list, 'pending');
+      };
+    }
     const touch = new Set([...(change.collected ?? []), ...Object.keys(change.problems ?? {}).map(Number)]);
     for (const id of touch) {
       const r = sales.get(id);

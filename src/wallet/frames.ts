@@ -58,6 +58,8 @@ export class FrameCollector {
   add(scanned: string): Collected {
     const m = FRAME_RE.exec(scanned);
     if (!m) {
+      // Mid-way through an animated receipt, a stray code (a sign, a URL) is ignored, not judged.
+      if (this.total > 0 && !/^(cashu:)?cashu[AB]/i.test(scanned.trim())) return { done: false, have: this.parts.size, total: this.total };
       // A plain single-QR receipt (or anything else: the check decides).
       this.reset();
       return { done: true, text: scanned };

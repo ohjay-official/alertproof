@@ -56,3 +56,13 @@ test('nonsense frame numbers are ignored', () => {
   assert.equal(c.add('AP1:5/3:0123abcd:xx').done, false);
   assert.equal(c.add('AP1:0/3:0123abcd:xx').done, true); // not a frame: handed to the check, which refuses it
 });
+
+test('audit: a stray code seen mid-way through an animated receipt is ignored, not judged', () => {
+  const frames = toFrames(receipt, 300);
+  const c = new FrameCollector();
+  c.add(frames[0]!);
+  assert.equal(c.add('https://example.com/menu').done, false);
+  let last;
+  for (const f of frames.slice(1)) last = c.add(f);
+  assert.deepEqual(last, { done: true, text: receipt });
+});

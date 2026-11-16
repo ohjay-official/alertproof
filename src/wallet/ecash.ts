@@ -40,8 +40,9 @@ export function randomScalar(): bigint {
 /** Powers of two, smallest first, as wallets split amounts. */
 export function splitAmount(total: number): number[] {
   if (!Number.isSafeInteger(total) || total < 0) throw new RangeError('amount must be a whole number of sats');
+  // Plain division, not bitwise ops: those stop at 32 bits.
   const out: number[] = [];
-  for (let bit = 1; bit <= total; bit *= 2) if (total & bit) out.push(bit);
+  for (let bit = 1; bit <= total; bit *= 2) if (Math.floor(total / bit) % 2 === 1) out.push(bit);
   return out;
 }
 

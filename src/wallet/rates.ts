@@ -39,7 +39,11 @@ export async function fetchRates(fetchFn: typeof fetch = (i, init) => fetch(i, i
 /** Sats for a price in naira or CFA, rounded up so the trader is never a sat short. */
 export function fiatToSats(amount: number, currency: Currency, rates: Rates): number {
   if (!Number.isFinite(amount) || amount <= 0) throw new RangeError('amount must be more than zero');
-  return Math.max(1, Math.ceil((amount / rates.btc[currency]) * SATS_PER_BTC - 1e-9));
+  const price = rates?.btc?.[currency];
+  if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) throw new RangeError('no valid saved rate');
+  const out = Math.max(1, Math.ceil((amount / price) * SATS_PER_BTC - 1e-9));
+  if (!Number.isSafeInteger(out)) throw new RangeError('amount too large');
+  return out;
 }
 
 /** What sats are worth in naira or CFA, for display. */

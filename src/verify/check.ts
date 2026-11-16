@@ -135,6 +135,7 @@ export function checkReceipt(
   const keysets = new Map<string, CachedKeyset>();
   for (const ks of mint.keysets) keysets.set(ks.id, ks);
   const now = opts.nowSeconds ?? Math.floor(Date.now() / 1000);
+  const margin = opts.expiryMarginSeconds ?? 3 * 86_400;
 
   // 2. shape, keys
   const proofs: Proof[] = [];
@@ -146,8 +147,8 @@ export function checkReceipt(
     const ks = keysets.get(p.id);
     if (!ks) return refuse('unknown_keys', `proof ${n}: keyset ${p.id} is not in the cache`);
     if (ks.unit !== 'sat') return refuse('wrong_unit', `proof ${n}: keyset unit is ${String(ks.unit)}`);
-    if (ks.final_expiry !== undefined && !(Number.isSafeInteger(ks.final_expiry) && now < ks.final_expiry)) {
-      return refuse('unknown_keys', `proof ${n}: keyset ${p.id} has expired, the mint would refuse it`);
+    if (ks.final_expiry !== undefined && !(Number.isSafeInteger(ks.final_expiry) && now + margin < ks.final_expiry)) {
+      return refuse('unknown_keys', `proof ${n}: keyset ${p.id} expires within ${margin} s, too soon to collect`);
     }
     const A = isRecord(ks.keys) ? own(ks.keys, String(p.amount)) : undefined;
     if (!isPubkeyHex(A)) return refuse('unknown_keys', `proof ${n}: no cached key for amount ${p.amount}`);
