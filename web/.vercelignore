@@ -1,0 +1,2 @@
+# Deploy the built app too: web/public/assets is built in CI, not committed.
+node_modules

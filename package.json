@@ -13,15 +13,21 @@
     "test:pure": "node --test src/verify/strict-json.test.ts src/verify/lock.test.ts src/verify/mint-url.test.ts src/verify/check.test.ts src/verify/fuzz.test.ts src/wallet/request.test.ts src/wallet/frames.test.ts src/wallet/rates.test.ts src/wallet/pin-lock.test.ts",
     "typecheck": "tsc -p tsconfig.json",
     "go-no-go": "node scripts/go-no-go.ts",
-    "verify": "node scripts/verify.ts"
+    "verify": "node scripts/verify.ts",
+    "build": "node scripts/build-web.mjs",
+    "ui-check": "node scripts/ui-check.mjs"
   },
   "dependencies": {
     "@cashu/cashu-ts": "^4.6.0",
     "@noble/curves": "^2.2.0",
-    "@noble/hashes": "^2.0.1"
+    "@noble/hashes": "^2.0.1",
+    "jsqr": "^1.4.0",
+    "uqr": "^0.1.2"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
+    "esbuild": "0.28.2",
+    "playwright": "^1.56.0",
     "typescript": "^6.0.3"
   }
 }

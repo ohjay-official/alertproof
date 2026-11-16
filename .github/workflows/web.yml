@@ -12,7 +12,11 @@ on:
     branches: [main]
     paths:
       - web/**
+      - src/**
+      - package.json
+      - package-lock.json
       - scripts/vercel.mjs
+      - scripts/build-web.mjs
       - .github/workflows/web.yml
   schedule:
     - cron: "7,37 * * * *"
@@ -51,7 +55,7 @@ jobs:
             echo '{"deployed":false,"reason":"VERCEL_TOKEN is not set"}' > web-out/status.json
             echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          CODE=$(git log -1 --format=%H -- web scripts/vercel.mjs)
+          CODE=$(git log -1 --format=%H -- web src package.json package-lock.json scripts/vercel.mjs scripts/build-web.mjs)
           LAST=$(git fetch -q origin web-results 2>/dev/null && git show FETCH_HEAD:status.json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).fingerprint||"")}catch{console.log("")}})' || true)
           echo "fingerprint=$CODE" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$LAST" = "$CODE" ]; then
@@ -60,6 +64,13 @@ jobs:
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Build the app
+        if: steps.decide.outputs.go == 'true'
+        run: |
+          set -o pipefail
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          node scripts/build-web.mjs 2>&1 | tee web-out/build.log
 
       - name: Install the Vercel CLI
         if: steps.decide.outputs.go == 'true'
@@ -89,7 +100,7 @@ jobs:
         run: |
           URL=$(cat web-out/domain.txt)
           echo "Production: $URL"
-          for P in / /404 /styles.css /favicon.svg /robots.txt /no-such-page; do
+          for P in / /app /pay /app.css /assets/app.js /assets/pay.js /404 /styles.css /favicon.svg /robots.txt /no-such-page; do
             printf '%s %s\n' "$(curl -sS -o /dev/null -w '%{http_code}' "$URL$P" 2>&1)" "$P"
           done | tee web-out/checks.txt
           # The site sets no cookies; fail if any response does.

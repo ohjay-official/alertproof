@@ -36,7 +36,9 @@ jobs:
         run: |
           mkdir -p ci-out
           set -o pipefail
-          npm ci --no-audit --no-fund 2>&1 | tee ci-out/install.log
+          # Falls back to npm install when a new package isn't in the lockfile
+          # yet; the updated lockfile is published below for the repo.
+          { npm ci --no-audit --no-fund || npm install --no-audit --no-fund; } 2>&1 | tee ci-out/install.log
           { node -v; npm ls --depth=0; } 2>&1 | tee ci-out/versions.txt
 
       - name: Types
@@ -93,12 +95,28 @@ jobs:
           cp go-no-go.json ci-out/ 2>/dev/null || true
           exit $rc
 
+      - name: Build the app and measure it
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node scripts/build-web.mjs 2>&1 | tee ci-out/build.log
+          cp web/public/assets/sizes.json ci-out/sizes.json
+
+      - name: The app in a real browser (demo on the test mint, screenshots)
+        id: ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright install --with-deps chromium > /dev/null 2>&1
+          node scripts/ui-check.mjs ci-out/shots 2>&1 | tee ci-out/ui.log
+
       - name: Publish to the verify-results branch
         if: always()
         run: |
           cp package-lock.json ci-out/ 2>/dev/null || true
           cd ci-out
-          echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
+          echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"build\":\"${{ steps.build.outcome }}\",\"ui\":\"${{ steps.ui.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
           cat status.json
           git init -q && git checkout -q -b verify-results
           git config user.name "sealpay-ci" && git config user.email "actions@users.noreply.github.com"
@@ -106,5 +124,5 @@ jobs:
           # GitHub sometimes answers a push with a server error; try again.
           for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" verify-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done
 
-      - if: steps.install.outcome != 'success' || steps.types.outcome != 'success' || steps.tests.outcome != 'success' || steps.gonogo.outcome != 'success'
+      - if: steps.install.outcome != 'success' || steps.types.outcome != 'success' || steps.tests.outcome != 'success' || steps.gonogo.outcome != 'success' || steps.build.outcome != 'success' || steps.ui.outcome != 'success'
         run: exit 1
