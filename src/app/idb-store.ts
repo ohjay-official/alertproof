@@ -21,6 +21,8 @@ export interface Sale {
   feeSats: number;
   /** the price asked, in sats, if one was set */
   requestedSats: number | null;
+  /** the price as the trader typed it, when there was one */
+  fiat: { amount: number; currency: string } | null;
   /** true for a genuine part payment kept while the trader asks for the rest */
   part: boolean;
   /** collected at the mint yet? */
@@ -69,7 +71,7 @@ export async function keepStorage(): Promise<boolean> {
 export class IdbStore implements SeenStore {
   readonly db: IDBDatabase;
   /** set before claim() so the saved sale records what was asked */
-  context: { requestedSats: number | null; now: () => number } = { requestedSats: null, now: Date.now };
+  context: { requestedSats: number | null; fiat?: { amount: number; currency: string } | null; now: () => number } = { requestedSats: null, now: Date.now };
 
   constructor(db: IDBDatabase) {
     this.db = db;
@@ -113,6 +115,7 @@ export class IdbStore implements SeenStore {
       totalSats: payment.totalSats,
       feeSats: payment.feeSats,
       requestedSats: this.context.requestedSats,
+      fiat: this.context.fiat ?? null,
       part: this.context.requestedSats !== null && lands < this.context.requestedSats,
       collected: false,
       proofs: payment.proofs,

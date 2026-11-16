@@ -395,7 +395,7 @@ async function check(text: string, requested: number | null, shownFiat: number |
   if (!decoded.ok) {
     v = { ok: false, code: 'malformed', detail: decoded.detail };
   } else {
-    store.context = { requestedSats: requested, now: Date.now };
+    store.context = { requestedSats: requested, fiat: shownFiat ? { amount: shownFiat, currency: p.currency } : null, now: Date.now };
     v = await acceptReceipt(decoded.token, { traderPubkey: p.pub, mints: [p.mint] }, requested ? { requestedSats: requested } : {}, nobleCurve, store);
   }
   verdict(v, requested, shownFiat, { ms: Math.round(performance.now() - t0), requests: blocked - before });
@@ -539,6 +539,11 @@ async function salesScreen(): Promise<void> {
   const toCollect = all.filter((s) => !s.collected);
   const held = sumAmounts(await wallet());
   const money = (n: number) => (p.rates ? `${fiat(satsToFiat(n, p.currency, p.rates))} (${sats(n)})` : sats(n));
+  /** fiat on top, sats underneath; a full-price sale shows the price as typed */
+  const amountCell = (n: number, typedFiat?: number | null) =>
+    p.rates || typedFiat ? [typedFiat ? fiat(typedFiat) : fiat(satsToFiat(n, p.currency, p.rates!)), h('small', {}, sats(n))] : [sats(n)];
+  const saleFiat = (s: Sale) => (s.fiat && !s.part ? s.fiat.amount : null);
+  const fiatTotal = (list: Sale[]) => (list.length && list.every((s) => saleFiat(s) !== null) ? list.reduce((n, s) => n + saleFiat(s)!, 0) : null);
   const msg = h('div');
 
   const collectBtn = button(`Collect ${toCollect.length} payment${toCollect.length === 1 ? '' : 's'}`, () =>
@@ -568,15 +573,15 @@ async function salesScreen(): Promise<void> {
       body: [
         h('h2', {}, 'Today'),
         h('dl', { class: 'totals' },
-          h('dt', {}, 'Sold'), h('dd', {}, money(sold)),
-          h('dt', {}, 'Still to collect'), h('dd', {}, money(sumAmounts(toCollect.map((s) => ({ amount: lands(s) }))))),
-          h('dt', {}, 'Collected and held'), h('dd', {}, money(held)),
+          h('dt', {}, 'Sold'), h('dd', {}, ...amountCell(sold, fiatTotal(todays))),
+          h('dt', {}, 'Still to collect'), h('dd', {}, ...amountCell(sumAmounts(toCollect.map((s) => ({ amount: lands(s) }))), fiatTotal(toCollect))),
+          h('dt', {}, 'Collected and held'), h('dd', {}, ...amountCell(held)),
         ),
         msg,
         h('ul', { class: 'sales' }, ...all.slice(0, 50).map((s) =>
           h('li', {},
             h('span', {}, new Date(s.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })),
-            h('span', {}, money(lands(s))),
+            h('span', {}, ...amountCell(lands(s), saleFiat(s))),
             h('span', { class: 'tag' }, s.part ? 'part paid' : s.collected ? 'collected' : 'to collect'),
           ))),
         all.length === 0 ? h('p', { class: 'hint' }, 'No sales yet. Paid receipts show up here.') : null,
