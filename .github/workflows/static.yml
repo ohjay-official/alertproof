@@ -48,6 +48,22 @@ jobs:
           npm audit > static-out/npm-audit.txt 2>&1 || true
           tail -5 static-out/npm-audit.txt
 
+      - name: Semgrep (a second analyser, different rules from CodeQL)
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet semgrep==1.97.0 2>&1 | tail -1
+          semgrep scan --metrics=off --quiet \
+            --config p/javascript --config p/typescript --config p/xss --config p/secrets --config p/security-audit \
+            --exclude node_modules --exclude 'web/public/assets' \
+            --json -o static-out/semgrep.json . || true
+          node -e '
+            const r = require("./static-out/semgrep.json");
+            const lines = (r.results || []).map((x) => `${x.extra.severity}  ${x.check_id.split(".").pop()}  ${x.path}:${x.start.line}  ${x.extra.message.split("\n")[0].slice(0, 140)}`);
+            require("fs").writeFileSync("static-out/semgrep.txt", (lines.length ? lines.join("\n") : "no findings") + "\n" + (r.errors?.length ? `${r.errors.length} rule errors\n` : ""));
+            console.log(lines.length + " Semgrep findings");
+          ' || echo "semgrep did not run" > static-out/semgrep.txt
+          cat static-out/semgrep.txt
+
       - uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
