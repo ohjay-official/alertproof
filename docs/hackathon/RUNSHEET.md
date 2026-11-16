@@ -56,6 +56,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 
 - Nov 11: confirmed solo entries are allowed; chose the idea (then named AlertProof); created the public repo ohjay-official/alertproof.
 - Nov 15: said "continue the Dakar build" (resumed a day early).
+- Nov 16 07:48: registered on Devpost (Grokbot, with his answers: working solo, heard via Devpost, agreed to eligibility and the official rules). Devpost confirmed by email and on the page.
 - Nov 16: his agent (Grokbot) added VERCEL_TOKEN; first deploy 00:53 Lagos, live at https://sealpay-beta.vercel.app.
 - Nov 16: his agent renamed the repo to ohjay-official/sealpay (only the name changed; still public, main).
 - Nov 16: renamed the product from AlertProof ("generic, sounds AI-made") to **Sealpay**: the mint seals the payment, locked to the trader, and the trader's phone checks the seal. Rejected: Gbam, Landed, Stamp, Touchstone, Till; wanted a made-up brand word from plain English.

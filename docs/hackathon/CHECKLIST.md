@@ -16,11 +16,11 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 ## 1. Calls only Oh-Jay can make (Nov 16 morning)
 
 - [ ] **Oh-Jay**: OK the screen look, or say what to change
-- [ ] **Oh-Jay**: confirm you're registered on Devpost and your student ID is ready (students only)
+- [x] **Oh-Jay**: registered on Devpost (Nov 16, 07:48). Keep your student ID ready (students only)
 - [ ] **Oh-Jay**: pick the 5 traders or POS agents near school and when you'll visit (by Nov 17 evening)
 - [ ] **Oh-Jay**: yes or no to a small real-money test (about ₦2,000 of real bitcoin, two phones), and which Lightning wallet you'll pay from
 - [ ] **Oh-Jay**: yes or no to the NFC sticker (needs NTAG215 stickers bought; otherwise it goes in next steps)
-- [ ] **Oh-Jay**: the music for the film (real track, cleared to use)
+- [x] Music for the film: Match Out by artbybigvee (Pixabay licence), found by Grokbot
 
 ## 2. Build the app (Nov 16 to 17), Claude
 
