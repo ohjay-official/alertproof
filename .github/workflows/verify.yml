@@ -51,6 +51,11 @@ jobs:
         continue-on-error: true
         run: set -o pipefail && npm test 2>&1 | tee ci-out/test.log
 
+      - name: Mutation testing (each rule broken on purpose must fail a test)
+        id: mutate
+        continue-on-error: true
+        run: set -o pipefail && node scripts/mutate.mjs 2>&1 | tee ci-out/mutate.log
+
       # The library's own type declarations for the token functions, so a
       # session without package installs can read the exact API.
       - name: Note the cashu-ts token API
@@ -120,7 +125,7 @@ jobs:
         run: |
           cp package-lock.json ci-out/ 2>/dev/null || true
           cd ci-out
-          echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"build\":\"${{ steps.build.outcome }}\",\"ui\":\"${{ steps.ui.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
+          echo "{\"commit\":\"${GITHUB_SHA}\",\"install\":\"${{ steps.install.outcome }}\",\"types\":\"${{ steps.types.outcome }}\",\"tests\":\"${{ steps.tests.outcome }}\",\"mutate\":\"${{ steps.mutate.outcome }}\",\"goNoGo\":\"${{ steps.gonogo.outcome }}\",\"build\":\"${{ steps.build.outcome }}\",\"ui\":\"${{ steps.ui.outcome }}\",\"at\":\"$(date -u +%FT%TZ)\"}" > status.json
           cat status.json
           git init -q && git checkout -q -b verify-results
           git config user.name "sealpay-ci" && git config user.email "actions@users.noreply.github.com"
@@ -128,5 +133,5 @@ jobs:
           # GitHub sometimes answers a push with a server error; try again.
           for i in 1 2 3; do git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" verify-results && break; [ "$i" = 3 ] && exit 1; sleep $((i * 5)); done
 
-      - if: steps.install.outcome != 'success' || steps.types.outcome != 'success' || steps.tests.outcome != 'success' || steps.gonogo.outcome != 'success' || steps.build.outcome != 'success' || steps.ui.outcome != 'success'
+      - if: steps.install.outcome != 'success' || steps.types.outcome != 'success' || steps.tests.outcome != 'success' || steps.mutate.outcome != 'success' || steps.gonogo.outcome != 'success' || steps.build.outcome != 'success' || steps.ui.outcome != 'success'
         run: exit 1

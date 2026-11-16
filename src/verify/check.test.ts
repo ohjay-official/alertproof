@@ -414,3 +414,13 @@ test('replay: two scans racing on one phone record it once', async () => {
   assert.equal(results.filter((r) => r.ok).length, 1);
   assert.equal(store.payments.length, 1);
 });
+
+test('audit: a receipt with more than 64 distinct proofs is refused before any signature work', () => {
+  const proofs = Array.from({ length: MAX_PROOFS + 1 }, () => signProof(KS, 1, lockSecret(TRADER)));
+  const v = checkReceipt({ mint: MINT_URL, unit: 'sat', proofs }, ctx(), {}, fakeCurve);
+  expectCode(v, 'malformed');
+  if (!v.ok) assert.match(v.detail, /more than 64 proofs/);
+  // and exactly 64 is fine
+  const ok = checkReceipt({ mint: MINT_URL, unit: 'sat', proofs: proofs.slice(0, MAX_PROOFS) }, ctx(), {}, fakeCurve);
+  assert.equal(ok.ok, true);
+});
