@@ -13,6 +13,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 const outDir = process.argv[2] ?? 'ci-out/shots';
 mkdirSync(outDir, { recursive: true });
@@ -32,8 +33,15 @@ const server = createServer((req, res) => {
     res.writeHead(404, { ...headers, 'content-type': 'text/html' });
     return res.end(readFileSync(join(root, '404.html')));
   }
-  res.writeHead(200, { ...headers, 'content-type': types[extname(file)] ?? 'application/octet-stream' });
-  res.end(readFileSync(file));
+  // Compress text like Vercel does, so measured bytes match what a phone downloads.
+  const type = types[extname(file)] ?? 'application/octet-stream';
+  const body = readFileSync(file);
+  if (/text|javascript|json|svg/.test(type) && /gzip/.test(req.headers['accept-encoding'] ?? '')) {
+    res.writeHead(200, { ...headers, 'content-type': type, 'content-encoding': 'gzip', vary: 'Accept-Encoding' });
+    return res.end(gzipSync(body, { level: 9 }));
+  }
+  res.writeHead(200, { ...headers, 'content-type': type });
+  res.end(body);
 }).listen(4173);
 
 const base = 'http://localhost:4173';
