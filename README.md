@@ -1,6 +1,6 @@
 # Sealpay
 
-<p align="center"><img src="docs/images/paid.png" width="260" alt="Sealpay's trader screen after a scan: a full green screen with a Paid stamp, ₦2,000, 2,312 sats locked to you, checked on this phone with the network off"></p>
+<p align="center"><img src="docs/images/paid.png" width="260" alt="Sealpay's trader screen after a scan: a full green screen with a Paid stamp, ₦2,000, the sats locked to the trader, checked on this phone with the network off, on the test mint"></p>
 
 **Payments a fake alert can't fake.** Market traders and POS agents in Nigeria lose goods to fake credit alerts and edited transfer screenshots, and on a bad network the real alert comes late anyway. With Sealpay the customer pays from any Lightning wallet and shows a receipt; the trader scans it and their own phone says **Paid** or **Not paid** in under a second, even with no data.
 
@@ -34,25 +34,26 @@ npx playwright install chromium   # once, for the browser check
 npm run verify                    # prints PASS or FAIL for each part, then PASS or FAIL
 ```
 
-It runs the types, 120 tests (with the official Cashu NUT-00 and NUT-12 vectors and fuzzing), the Go/No-Go on the real test mint, the app build against its 60 KB budget, and the judge's demo in a real browser, including opening with no data, slow 3G and the data a payment uses. CI runs the same on every push ([verify.yml](.github/workflows/verify.yml)); its logs and screenshots are on the [`verify-results`](https://github.com/ohjay-official/sealpay/tree/verify-results) branch.
+It runs the types, 123 tests (with the official Cashu NUT-00 and NUT-12 vectors and fuzzing), the Go/No-Go on the real test mint, the app build against its 60 KB budget, and the judge's demo in a real browser, including opening with no data, slow 3G and the data a payment uses. CI runs the same on every push ([verify.yml](.github/workflows/verify.yml)); its logs and screenshots are on the [`verify-results`](https://github.com/ohjay-official/sealpay/tree/verify-results) branch.
 
 </details>
 
 ## Proof It's Real
 
 - **The core claim on a real mint.** The Go/No-Go runs the app's own pay, check, collect and cash-out code on testnut.cashu.space (cdk-mintd 0.18.1): the customer pays, the trader's check is green with the network switched off and makes no request, replays and edits are refused, the mint itself refuses the customer's attempts to take the money back, the trader collects with their signature and cashes 1,000 sats out to a Lightning invoice with 332 sats of change. **21 of 21 steps** ([go-no-go.log](https://github.com/ohjay-official/sealpay/blob/verify-results/go-no-go.log), [script](scripts/go-no-go.ts)).
-- **The app in a real browser.** CI taps through the demo above with the site's real security headers: **16 of 16 steps**, Paid checked in 15 ms with the network off and 0 requests ([ui.log](https://github.com/ohjay-official/sealpay/blob/verify-results/ui.log), [screenshots](https://github.com/ohjay-official/sealpay/tree/verify-results/shots)).
+- **The app in a real browser.** CI taps through the demo above with the site's real security headers: **16 of 16 steps**, Paid checked in 15 to 25 ms with the network off and 0 requests ([ui.log](https://github.com/ohjay-official/sealpay/blob/verify-results/ui.log), [screenshots](https://github.com/ohjay-official/sealpay/tree/verify-results/shots)).
 - **Low bandwidth, measured** ([metrics.json](https://github.com/ohjay-official/sealpay/blob/verify-results/metrics.json), [sizes.json](https://github.com/ohjay-official/sealpay/blob/verify-results/sizes.json)):
 
   | What | Measured |
   |---|---|
-  | Trader app, first load (gzipped) | 44.0 KB (budget 60 KB) |
-  | Trader app on Chrome's Slow 3G, cold start to usable | 2.3 s, 48.5 KB |
-  | Customer's whole payment, page included | 46 KB (38.2 KB page, 7.8 KB payment) |
-  | Checking a receipt | 0 bytes, about 15 to 80 ms |
+  | Trader app, first load (gzipped) | 46.5 KB (budget 60 KB) |
+  | Trader app on Chrome's Slow 3G, cold start to usable | 2.4 s, 51.0 KB |
+  | Customer's whole payment, page included | 46.3 KB (38.6 KB page, 7.7 KB payment) |
+  | Checking a receipt | 0 bytes, 15 to 80 ms in CI |
   | Opening the app after the first visit | 0 bytes: opens and makes a pay code with no data |
+| Saving everything to a backup file | Sales screen: **Save a backup file** |
 
-- **Tested hard.** 120 tests: every refusal, parser differential cases, 3,000-run fuzzing of genuine receipts and locks, mutation testing (each rule broken on purpose, 20 of 20 caught), an in-memory mint with real curve math for every money path, and 3,000 random edits to receipts. Two independent reviews and static analysis ([docs/SECURITY.md](docs/SECURITY.md)).
+- **Tested hard.** 123 tests: every refusal, parser differential cases, 3,000-run fuzzing of genuine receipts and locks, mutation testing (each rule broken on purpose, 20 of 20 caught), an in-memory mint with real curve math for every money path, and 3,000 random edits to receipts. Two independent reviews, every finding fixed, and static analysis ([docs/SECURITY.md](docs/SECURITY.md)).
 - Real-money run on a mainnet mint: TBD-post-build: two-phone run on Minibits with the steps and amounts.
 - Trader visits: TBD-post-build: what 5 traders and POS agents said ([docs/TRADERS.md](docs/TRADERS.md)).
 
@@ -65,7 +66,7 @@ Who has the problem: in a Punch survey of 330 traders in four Lagos markets, 52%
 - **The receipt is checked on the trader's phone, offline.** Cashu ecash carries the mint's signature proof (NUT-12 DLEQ), so the phone checks it against the mint's keys it saved while online. No network, no server, no alert.
 - **The money is locked to the trader** (NUT-11 P2PK). The customer can't take it back or spend it twice; anything with a refund path, a time lock or a second key is refused.
 - **The customer needs no Cashu wallet.** They pay a normal Lightning invoice from the wallet they already use; the page turns it into the locked receipt.
-- **Built for a ₦60,000 phone at a market stall:** a full-screen green or red verdict with a stamp, a tone, a buzz and the phone's voice ("Paid, 2000 naira"), naira or CFA, English or French, a POS-style keypad, 44 KB to load.
+- **Built for a ₦60,000 phone at a market stall:** a full-screen green or red verdict with a stamp, a tone, a buzz and the phone's voice ("Paid, 2000 naira"), naira or CFA, English or French, a POS-style keypad, 46.5 KB to load.
 - **Credit where it's due:** [Numo](https://github.com/cashubtc/numo), the Cashu team's point-of-sale app, is the closest product and the mirror image: its customer can be offline but its merchant must be online. Sealpay works when the trader isn't.
 
 ## What Works Today
@@ -81,7 +82,8 @@ Who has the problem: in a Punch survey of 330 traders in four Lagos markets, 52%
 | Real money on a mainnet mint (Minibits) | In the app as a setup choice; TBD-post-build: the real-money run |
 | Cash out to a Lightning address (instead of pasting an invoice) | Not built |
 | NFC sticker on the stall | Not built |
-| Per-sale lock keys (better replay protection after restoring a phone) | Not built; see [Constraints](#constraints) |
+| Backup file with money, sales and seen receipts; restore from it or from the recovery code | Done |
+| Per-sale lock keys and deterministic secrets (recover money from the code alone) | Not built; see [Constraints](#constraints) |
 
 ## Judging Criteria
 
@@ -153,14 +155,14 @@ No accounts, no phone numbers, no personal data collected. The shop name, key, s
 ## Constraints
 
 - **Custodial float:** see What it doesn't promise above.
-- **Replay protection lives on the phone:** a phone restored from the recovery code can't tell an old receipt from a new one offline until it has collected. The planned fix is per-sale lock keys.
+- **What lives on the phone:** money already collected, and the list of receipts already seen, live on the trader's phone. A **backup file** (Sales screen) carries both to a new phone. The recovery code alone brings back the key, so payments still waiting can be collected; a phone restored that way confirms each receipt online with the mint, because it doesn't know which old receipts it saw. The planned fix is per-sale lock keys and deterministic secrets (NUT-13).
 - **Both phones offline:** if the customer also has no data, they can't pay; the trader's phone is the one that needs none.
 - **Mid-range Android first:** scanning uses the phone's built-in QR detector; iPhones load a small backup decoder (47 KB) only when needed.
 - **Test mint for the demo:** fake sats, and the public test mint can reset.
 
 ## Metrics to Track
 
-From a pilot, per trader: payments checked per week, share checked with no data, fake or reused receipts caught, time from scan to verdict, payments collected within a day, data used per day, and how many traders keep using it after two weeks. Today, measured in CI: 0 bytes and about 15 to 80 ms per check, 46 KB per customer payment, 44 KB first load.
+From a pilot, per trader: payments checked per week, share checked with no data, fake or reused receipts caught, time from scan to verdict, payments collected within a day, data used per day, and how many traders keep using it after two weeks. Today, measured in CI: 0 bytes and 15 to 80 ms per check, 46.3 KB per customer payment, 46.5 KB first load.
 
 ## Next Iteration
 
