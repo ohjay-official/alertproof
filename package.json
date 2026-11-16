@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "node --test \"src/**/*.test.ts\"",
-    "test:pure": "node --test src/verify/strict-json.test.ts src/verify/lock.test.ts src/verify/mint-url.test.ts src/verify/check.test.ts src/verify/fuzz.test.ts src/wallet/request.test.ts src/wallet/frames.test.ts src/wallet/rates.test.ts src/wallet/pin-lock.test.ts",
+    "test:pure": "node --test src/verify/strict-json.test.ts src/verify/lock.test.ts src/verify/mint-url.test.ts src/verify/check.test.ts src/verify/fuzz.test.ts src/wallet/request.test.ts src/wallet/frames.test.ts src/wallet/rates.test.ts src/wallet/pin-lock.test.ts src/wallet/cashub.test.ts",
     "typecheck": "tsc -p tsconfig.json",
     "go-no-go": "node scripts/go-no-go.ts",
     "verify": "node scripts/verify.ts",
