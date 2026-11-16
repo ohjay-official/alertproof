@@ -69,7 +69,8 @@ const context = await browser.newContext({ viewport: { width: 390, height: 844 }
 const page = await context.newPage();
 const problems = [];
 page.on('console', (m) => {
-  if (m.type() === 'error') problems.push(m.text());
+  // The offline step cuts the network on purpose; failed loads then are expected.
+  if (m.type() === 'error' && !m.text().includes('ERR_INTERNET_DISCONNECTED')) problems.push(m.text());
 });
 page.on('pageerror', (e) => problems.push(String(e)));
 let n = 0;
@@ -123,8 +124,9 @@ try {
   await step('checked with the network off: Paid', async () => {
     await page.getByRole('button', { name: /network off/i }).click();
     await page.locator('.verdict.ok .stamp').filter({ hasText: 'Paid' }).waitFor({ timeout: 10_000 });
+    await page.getByText('Test mint: fake sats, not real money.').first().waitFor();
     await shot('verdict-paid');
-    return await page.locator('.v-note').textContent();
+    return await page.locator('.v-note').first().textContent();
   });
   await step('same receipt again: Already used', async () => {
     await page.getByRole('button', { name: 'Demo: show it again' }).click();
