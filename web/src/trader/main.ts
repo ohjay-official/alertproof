@@ -130,6 +130,24 @@ function welcome(): void {
 function setupShop(restoreSeed?: Uint8Array): void {
   let currency: Currency = 'NGN';
   let lang: Lang = 'en';
+  let mintUrl = MINTS[0]!.url;
+  const mintChoice = h(
+    'div',
+    { class: 'choice stack', role: 'radiogroup', 'aria-label': 'Mint' },
+    ...MINTS.map((m) =>
+      h('button', {
+        type: 'button',
+        role: 'radio',
+        'aria-checked': String(m.url === mintUrl),
+        onclick: (e: Event) => {
+          mintUrl = m.url;
+          for (const b of mintChoice.querySelectorAll('button')) b.setAttribute('aria-checked', String(b === e.currentTarget));
+          mintWarn.hidden = m.test;
+        },
+      }, m.label),
+    ),
+  );
+  const mintWarn = h('p', { class: 'hint left', hidden: true }, 'Real money: the mint holds it until you cash out. Keep small amounts there and cash out often.');
   const langChoice = h(
     'div',
     { class: 'choice', role: 'radiogroup', 'aria-label': 'Language' },
@@ -173,7 +191,7 @@ function setupShop(restoreSeed?: Uint8Array): void {
         return;
       }
       try {
-        const [mint, rates] = await Promise.all([fetchTrustedMint(MINTS[0]!.url), fetchRates().catch(() => null)]);
+        const [mint, rates] = await Promise.all([fetchTrustedMint(mintUrl), fetchRates().catch(() => null)]);
         const seed = restoreSeed ?? newSeed();
         if (restoreSeed) await choosePin(seed, { shop, currency, mint, rates, lang });
         else showCode(seed, { shop, currency, mint, rates, lang });
@@ -193,7 +211,8 @@ function setupShop(restoreSeed?: Uint8Array): void {
         h('p', { class: 'label' }, 'Language for Paid / Not paid'),
         langChoice,
         h('p', { class: 'label' }, 'Mint (holds the money until you cash out)'),
-        h('p', { class: 'mintline' }, MINTS[0]!.label),
+        mintChoice,
+        mintWarn,
         msg,
       ],
       actions: [next],

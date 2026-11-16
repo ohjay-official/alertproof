@@ -85,3 +85,7 @@ for (const [f, c] of Object.entries(report.contents)) console.log(f, JSON.string
 for (const [f, s] of Object.entries(sizes)) console.log(`${f.padEnd(28)} ${String(s.bytes).padStart(8)} B  ${String(s.gzip).padStart(7)} B gz`);
 const kb = (n) => (n / 1024).toFixed(1) + ' KB';
 console.log(`first load, gzipped: trader ${kb(report.firstLoadGzip.trader)}, customer ${kb(report.firstLoadGzip.customer)} (budget ${kb(report.budgetGzip)})`);
+if (Math.max(report.firstLoadGzip.trader, report.firstLoadGzip.customer) > report.budgetGzip) {
+  console.log('FAIL: over the data budget');
+  process.exit(1);
+}

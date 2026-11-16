@@ -6,8 +6,9 @@
  * 1. types (tsc)
  * 2. unit, adversarial and fuzz tests, plus the official Cashu curve vectors
  * 3. the Go/No-Go run on the Cashu test mint (needs internet; fake sats)
- *
- * Bundle-size budget and the offline browser test join once the app exists.
+ * 4. the app build, with its gzipped size against the 60 KB budget
+ * 5. the app in a real browser: the judge's demo on the test mint, offline
+ *    open, slow 3G, and data per payment (needs `npx playwright install chromium` once)
  */
 import { spawnSync } from 'node:child_process';
 
@@ -15,6 +16,8 @@ const checks: Array<{ name: string; cmd: string; args: string[] }> = [
   { name: 'types', cmd: 'npx', args: ['tsc', '-p', 'tsconfig.json'] },
   { name: 'tests and curve vectors', cmd: 'node', args: ['--test', 'src/**/*.test.ts'] },
   { name: 'Go/No-Go on the test mint', cmd: 'node', args: ['scripts/go-no-go.ts'] },
+  { name: 'app build and size budget', cmd: 'node', args: ['scripts/build-web.mjs'] },
+  { name: 'app in a real browser', cmd: 'node', args: ['scripts/ui-check.mjs', 'ci-out/shots'] },
 ];
 
 let failed = 0;

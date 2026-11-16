@@ -86,3 +86,6 @@ input, textarea { width: 100%; font-family: inherit; font-size: 18px; line-heigh
 .verdict .btn { background: #fff; color: var(--ink); }
 .verdict .btn.quiet { background: transparent; color: inherit; border-color: currentColor; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.choice.stack { grid-template-columns: 1fr; }
+.choice.stack button { text-align: left; padding: 0 16px; }
+.hint.left { text-align: left; }

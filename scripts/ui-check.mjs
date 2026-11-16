@@ -11,7 +11,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 const outDir = process.argv[2] ?? 'ci-out/shots';
@@ -44,6 +44,19 @@ const record = (step, pass, note = '') => {
 };
 
 const browser = await chromium.launch();
+const metrics = {};
+
+/** Bytes over the network (as sent, compressed) while `fn` runs, via Chrome's devtools protocol. */
+async function measureBytes(pg, fn) {
+  const cdp = await pg.context().newCDPSession(pg);
+  await cdp.send('Network.enable');
+  let bytes = 0;
+  cdp.on('Network.loadingFinished', (e) => (bytes += e.encodedDataLength));
+  await fn(cdp);
+  await new Promise((r) => setTimeout(r, 500));
+  await cdp.detach().catch(() => undefined);
+  return bytes;
+}
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const page = await context.newPage();
 const problems = [];
@@ -148,6 +161,45 @@ try {
     await page.getByRole('button', { name: 'Pay ₦2,000' }).waitFor();
     await shot('pay-page');
   });
+  await step('slow 3G: the trader app is usable from a cold start', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const pg = await ctx.newPage();
+    let ms = 0;
+    const bytes = await measureBytes(pg, async (cdp) => {
+      // Chrome's "Slow 3G" preset: 400 ms latency, about 400 kbit/s each way
+      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 400, downloadThroughput: 50_000, uploadThroughput: 50_000 });
+      const t0 = Date.now();
+      await pg.goto(`${base}/app`);
+      await pg.getByRole('button', { name: 'Try the demo' }).waitFor({ timeout: 60_000 });
+      ms = Date.now() - t0;
+    });
+    metrics.slow3g = { firstVisitMs: ms, bytes };
+    await ctx.close();
+    return `${(ms / 1000).toFixed(1)} s, ${(bytes / 1024).toFixed(1)} KB`;
+  });
+  await step('customer pays through the real pay page (data used, end to end)', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const pg = await ctx.newPage();
+    pg.on('pageerror', (e) => problems.push(String(e)));
+    // A valid lock key (the curve's generator point); fake sats on the test mint.
+    const key = '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
+    let pageBytes = 0;
+    const total = await measureBytes(pg, async () => {
+      await pg.goto(`${base}/pay#k=${key}&m=https%3A%2F%2Ftestnut.cashu.space&s=Mama+Nkechi%27s+Fabrics&a=2292&f=2000&c=NGN`);
+      await pg.getByRole('button', { name: 'Pay ₦2,000' }).waitFor();
+      await new Promise((r) => setTimeout(r, 300));
+    }).then(async (b) => {
+      pageBytes = b;
+      return b + (await measureBytes(pg, async () => {
+        await pg.getByRole('button', { name: 'Pay ₦2,000' }).click();
+        await pg.getByText('Show this to the trader').waitFor({ timeout: 60_000 });
+      }));
+    });
+    await pg.screenshot({ path: join(outDir, `${String(++n).padStart(2, '0')}-customer-receipt-real-page.png`) });
+    metrics.customerPayment = { pageBytes, paymentBytes: total - pageBytes, totalBytes: total };
+    await ctx.close();
+    return `page ${(pageBytes / 1024).toFixed(1)} KB + payment ${((total - pageBytes) / 1024).toFixed(1)} KB`;
+  });
   await step('no console errors', async () => {
     if (problems.length) throw new Error(problems.slice(0, 3).join(' | '));
   });
@@ -156,6 +208,7 @@ try {
   server.close();
 }
 
+writeFileSync(join(outDir, '..', 'metrics.json'), JSON.stringify(metrics, null, 2));
 const failed = results.filter((r) => !r.pass).length;
 console.log(`\n${results.length - failed}/${results.length} steps passed`);
 console.log(failed ? 'FAIL' : 'PASS');
