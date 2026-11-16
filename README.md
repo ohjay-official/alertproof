@@ -47,7 +47,7 @@ It runs the types, 123 tests (with the official Cashu NUT-00 and NUT-12 vectors 
   | What | Measured |
   |---|---|
   | Trader app, first load (gzipped) | 46.5 KB (budget 60 KB) |
-  | Trader app on Chrome DevTools' Slow 3G preset (2 s latency, about 400 kbit/s), cold start to usable | TBD-post-build: rerun with the real preset |
+  | Trader app on Chrome DevTools' Slow 3G preset (2 s latency, about 400 kbit/s), cold start to usable | 7.1 s, 51.0 KB |
   | Customer's whole payment, page included | 46.4 KB (38.6 KB page, 7.7 KB payment) |
   | Checking a receipt | 0 bytes; 25 ms in the browser run, 60 ms in the Go/No-Go (CI machines) |
   | Opening the app after the first visit | 0 bytes: opens and makes a pay code with no data |

@@ -37,5 +37,5 @@ Send me the clips as they are; I cut them to the beat. Before sending, check not
 
 1. **Problem (30 s):** fake alerts and edited screenshots at Lagos markets (Punch survey numbers), slow real alerts on bad networks, POS agents as targets (about 2 million in Nigeria, AMMBAN). What the 5 traders said.
 2. **Solution (60 s):** the live demo from the film, network off. One line on how: the mint signs the payment, it's locked to the trader, the phone checks both by itself.
-3. **Impact (45 s):** measured numbers (0 bytes per check, 46 KB per payment, 47 KB app, 2.4 s on slow 3G), who it reaches (traders, POS agents; 218,583 active mobile-money merchants in Senegal, BCEAO), the trader visits.
+3. **Impact (45 s):** measured numbers (0 bytes per check, 46 KB per payment, 46.5 KB app, usable in 7.1 s from a cold start on slow 3G and instantly after that), who it reaches (traders, POS agents; 218,583 active mobile-money merchants in Senegal, BCEAO), the trader visits.
 4. **Next steps (45 s):** pilot near school, real-money cash-out to naira and CFA, NFC sticker, upstream contribution to Cashu (CDK #1927).

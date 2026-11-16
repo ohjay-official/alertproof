@@ -44,7 +44,7 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 - Nov 16: CI runs the demo in a real browser on testnut (scripts/ui-check.mjs) with the site's real headers; screenshots on verify-results/shots.
 - Nov 16: Real-money mint: Minibits (https://mint.minibits.cash/Bitcoin, cdk-mintd 0.18.3, no input fee), picked from CI's probe of 13 public mints (9 usable). In setup as a choice; the trader must pick a mint (no default) after review #11's critical finding.
 - Nov 16: Second independent review (#11): 1 critical, 4 high, 2 medium, 2 low, all fixed or stated (docs/SECURITY.md). Collect and cash out now save their plan first and recover after a crash; pay page keeps payments by quote; backup file; mint keys refresh.
-- Nov 16: Measured in CI: trader first load 46.5 KB gz, slow 3G cold start 2.4 s / 51 KB, a customer's whole payment 46.3 KB, check 15 to 80 ms with 0 requests; opens with no data after the first visit. 123 tests, Go/No-Go 21/21, browser run 16/16.
+- Nov 16: Measured in CI: trader first load 46.5 KB gz, slow 3G cold start 7.1 s / 51 KB (DevTools' real preset; 2.4 s was with a milder setting), a customer's whole payment 46.3 KB, check 15 to 80 ms with 0 requests; opens with no data after the first visit. 123 tests, Go/No-Go 21/21, browser run 16/16.
 - Nov 16: README rewritten (readme-playbook + the event's README rules), film script and shot list, trader visit kit, submission draft written.
 - Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
 

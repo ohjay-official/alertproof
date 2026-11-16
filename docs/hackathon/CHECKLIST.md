@@ -80,7 +80,7 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 - [x] Built during the event: first commit date, written with AI (Claude), every library with its version, day-by-day build log
 - [x] LICENSE file (MIT)
 - [ ] **CHECK IN**: Oh-Jay reads the top of the README
-- [ ] Judge simulation (running Nov 16): a fresh agent follows the README against the repo and the live site and lists every claim that doesn't match; fix every one
+- [x] Judge simulation (Nov 16, 12 mismatches fixed, one demo bug fixed): a fresh agent follows the README against the repo and the live site and lists every claim that doesn't match; fix every one
 
 ## 6. Film and pitch (Nov 18 to 19)
 
