@@ -1,6 +1,6 @@
 # Runsheet: Sealpay at Dakar Bitcoin Hack 2026
 
-Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md). Update and push it before ending.
+Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) and what is left in [CHECKLIST.md](CHECKLIST.md). Update and push it before ending.
 
 ## Event
 
