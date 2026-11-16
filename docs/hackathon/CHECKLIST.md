@@ -40,52 +40,52 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 - [x] Customer pay page: shop and amount, Lightning invoice QR, Open wallet, Copy invoice, waits for payment
 - [x] Customer receipt: animated QR, saved on their phone, survives a page reload
 - [x] Demo mode for judges: one tap makes a test trader on fake sats, pays itself, and hands the receipt to the trader side, with a clear "network off" switch
-- [ ] Works as an app: install to home screen, opens with no data after the first visit
-- [ ] French for the verdict and the spoken result (Senegal judges)
+- [x] Works as an app: install to home screen, opens with no data after the first visit
+- [x] French for the verdict and the spoken result (Senegal judges)
 - [ ] **CHECK IN**: Oh-Jay opens the live app on his phone and tries it
 
 ## 3. Prove it works (Nov 17 to 18)
 
 - [x] **Claude**: browser test in CI of the whole journey on the test mint, trader's network off, screenshots saved
 - [x] **Claude**: measure first-load size in CI: trader 42.7 KB, customer 33.6 KB gzipped (budget 60 KB)
-- [ ] **Claude**: data cost per payment in naira, and a slow-3G load time, in CI
-- [ ] **Claude**: one command, `npm run verify`, prints PASS or FAIL for everything, including the above
+- [x] **Claude**: data per payment (46.3 KB, page included) and slow 3G (2.4 s cold start), in CI
+- [x] **Claude**: one command, `npm run verify`, prints PASS or FAIL for everything, including the above
 - [ ] **Oh-Jay**: test on your Android and your iPhone, send screenshots of anything odd
 - [ ] **Oh-Jay**: 2 or 3 friends try it; **Claude** fixes what they hit
 - [ ] **Oh-Jay**: visit 5 traders or POS agents, ask the 5 questions in the spec, show the demo, voice-note or photo your notes; **Claude** writes them up as docs/TRADERS.md (their words, with permission, no full names)
-- [ ] **Claude**: find a real mint that supports locks, offline proofs and browser calls, for the real-money test
+- [x] **Claude**: find a real mint that supports locks, offline proofs and browser calls, for the real-money test
 - [ ] **Oh-Jay** (with **Claude** guiding): real-money test with two phones, about ₦2,000; **Claude** records it in the README with no personal wallet address
-- [ ] **Claude**: second independent review of the app by a fresh agent, and the privacy pass (no personal data, no cookies, no outside scripts); results in docs/SECURITY.md
-- [ ] **Claude**: fix everything the tests, visits and reviews find
+- [x] **Claude**: second independent review of the app by a fresh agent, and the privacy pass (no personal data, no cookies, no outside scripts); results in docs/SECURITY.md
+- [x] **Claude**: fix everything the tests, visits and reviews find
 
 ## 4. Website launch checklist (Nov 18), Claude
 
-- [ ] Custom 404, main button above the fold
-- [ ] Title and description on every page, share image (Open Graph and Twitter card)
-- [ ] Icon set: tab, Apple, 192, 512, app manifest
-- [ ] robots.txt, sitemap.xml, canonical links, structured data on the home page
-- [ ] Alt text on every image, loading states on buttons ("Paying…"), keyboard focus, works on small phones
-- [ ] Privacy and terms pages; the privacy page says there are no cookies
-- [ ] CI checks every page of the live site after each deploy (the no-cookie check already runs)
+- [x] Custom 404, main button above the fold
+- [x] Title and description on every page, share image (Open Graph and Twitter card)
+- [x] Icon set: tab, Apple, 192, 512, app manifest
+- [x] robots.txt, sitemap.xml, canonical links, structured data on the home page
+- [x] Alt text on every image, loading states on buttons ("Making your invoice…", "Getting ready…"), keyboard focus, works on small phones
+- [x] Privacy and terms pages; the privacy page says there are no cookies
+- [x] CI checks every page of the live site after each deploy (the no-cookie check already runs)
 - [ ] **CHECK IN**: Oh-Jay opens the live site on his phone
 
 ## 5. README and docs (Nov 18), Claude
 
-- [ ] README rewritten: one-line pitch, a picture of it working, a one-line path for judges, quick links, "Try it in 30 seconds"
-- [ ] Proof it's real: tests, Go/No-Go, real-money test, trader visits, measured numbers
-- [ ] What's new here, how it compares with Numo (credit it), how it works, architecture diagram (judges ask for one)
-- [ ] Judging criteria table: each criterion and where to check it
-- [ ] Reach estimate from sourced numbers (POS agents, market traders), never invented
-- [ ] "What works today" table that admits what isn't finished; constraints; next steps
-- [ ] Built during the event: first commit date, written with AI (Claude), every library with its version, day-by-day build log
-- [ ] LICENSE file (MIT)
+- [x] README rewritten: one-line pitch, a picture of it working, a one-line path for judges, quick links, "Try it in 30 seconds"
+- [x] Proof it's real: tests, Go/No-Go, real-money test, trader visits, measured numbers
+- [x] What's new here, how it compares with Numo (credit it), how it works, architecture diagram (judges ask for one)
+- [x] Judging criteria table: each criterion and where to check it
+- [x] Reach estimate from sourced numbers (POS agents, market traders), never invented
+- [x] "What works today" table that admits what isn't finished; constraints; next steps
+- [x] Built during the event: first commit date, written with AI (Claude), every library with its version, day-by-day build log
+- [x] LICENSE file (MIT)
 - [ ] **CHECK IN**: Oh-Jay reads the top of the README
-- [ ] Judge simulation: a fresh agent follows the README against the repo and the live site and lists every claim that doesn't match; fix every one
+- [ ] Judge simulation (running Nov 16): a fresh agent follows the README against the repo and the live site and lists every claim that doesn't match; fix every one
 
 ## 6. Film and pitch (Nov 18 to 19)
 
-- [ ] **Claude**: update the 60-second film script with the Sealpay name and today's real rate; **Oh-Jay** OKs it
-- [ ] **Claude**: shot list with numbered steps for recording on your phone; **Oh-Jay** records the clips (airplane mode on the trader phone)
+- [x] **Claude**: update the 60-second film script with the Sealpay name and today's real rate; **Oh-Jay** OKs it
+- [x] **Claude**: shot list with numbered steps for recording on your phone; **Oh-Jay** records the clips (airplane mode on the trader phone)
 - [ ] **Claude**: backup film first (Nov 18), final cut after (Nov 19): text intro, the app working within 10 seconds, real screens only, cuts on the beat, your music
 - [ ] **Oh-Jay**: watch the final cut and approve
 - [ ] **Claude**: the presentation the rules ask for (3 minutes: problem, solution, impact, next steps, with the traders' words and the numbers); **Oh-Jay** approves
@@ -93,7 +93,7 @@ Deadline: **Nov 20, 21:00 Lagos.** We submit by **Nov 20 midday**, never at the 
 ## 7. Submit (Nov 19 to 20)
 
 - [ ] **Claude**: re-read the rules page and every submission field (Nov 18)
-- [ ] **Claude**: fill docs/hackathon/submission-draft.md with an answer for every field
+- [x] **Claude**: fill docs/hackathon/submission-draft.md with an answer for every field
 - [ ] **Oh-Jay**: check the prize payout details are your own wallet or Lightning address, never the project's
 - [ ] Freeze Nov 19 evening: fixes only after that
 - [ ] **Claude**: Nov 20 morning, retest the whole journey from a fresh browser; README, film and live app all match

@@ -42,6 +42,10 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 - Nov 16: Renamed to Sealpay everywhere in the repo (no payments brand by that name found). Key derivation domain is now "Sealpay trader key v1" (no real keys existed yet). Repo renamed to ohjay-official/sealpay by his agent (Grokbot) on Nov 16; old links redirect.
 - Nov 16: App built: web/src (trader, pay, shared), esbuild in CI, CSP opened only to testnut and CoinGecko, camera allowed for self. Own cashuB codec (src/wallet/cashub.ts) replaces cashu-ts in the app: first load 77.5 KB -> 42.7 KB. cashu-ts stays as a dev dependency for compatibility tests.
 - Nov 16: CI runs the demo in a real browser on testnut (scripts/ui-check.mjs) with the site's real headers; screenshots on verify-results/shots.
+- Nov 16: Real-money mint: Minibits (https://mint.minibits.cash/Bitcoin, cdk-mintd 0.18.3, no input fee), picked from CI's probe of 13 public mints (9 usable). In setup as a choice; the trader must pick a mint (no default) after review #11's critical finding.
+- Nov 16: Second independent review (#11): 1 critical, 4 high, 2 medium, 2 low, all fixed or stated (docs/SECURITY.md). Collect and cash out now save their plan first and recover after a crash; pay page keeps payments by quote; backup file; mint keys refresh.
+- Nov 16: Measured in CI: trader first load 46.5 KB gz, slow 3G cold start 2.4 s / 51 KB, a customer's whole payment 46.3 KB, check 15 to 80 ms with 0 requests; opens with no data after the first visit. 123 tests, Go/No-Go 21/21, browser run 16/16.
+- Nov 16: README rewritten (readme-playbook + the event's README rules), film script and shot list, trader visit kit, submission draft written.
 - Nov 15: Static analysis pass done (CodeQL + npm audit), nothing to fix in shipped code (docs/SECURITY.md pass 8).
 
 ## CHECK IN (open)
@@ -70,6 +74,6 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 
 ## Next step
 
-1. Oh-Jay opens https://sealpay-beta.vercel.app/app#demo on his Android and iPhone and reacts (CHECK IN). Confirm Devpost registration (Grokbot is on it).
-2. Then: service worker so the app opens with no data, French verdicts, slow-3G timing and data cost, real mint for the real-money test, trader visits (Nov 17).
-3. See CHECKLIST.md for everything after.
+1. Oh-Jay: try https://sealpay-beta.vercel.app/app#demo on Android and iPhone (voice, buzz, camera scan); trader visits Nov 17 with docs/hackathon/trader-visit-kit.md; record the film clips (docs/hackathon/demo-script.md); yes or no to the real-money run on Minibits.
+2. Claude: fix what the judge simulation finds; write up trader visits into docs/TRADERS.md; real-money run with him; cut the film; fill the TBD lines in README and submission-draft.md.
+3. See CHECKLIST.md for the rest.
