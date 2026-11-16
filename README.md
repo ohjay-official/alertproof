@@ -34,7 +34,7 @@ npx playwright install chromium   # once, for the browser check
 npm run verify                    # prints PASS or FAIL for each part, then PASS or FAIL
 ```
 
-It runs the types, 123 tests (with the official Cashu NUT-00 and NUT-12 vectors and fuzzing), the Go/No-Go on the real test mint, the app build against its 60 KB budget, and the judge's demo in a real browser, including opening with no data, slow 3G and the data a payment uses. CI runs the same on every push ([verify.yml](.github/workflows/verify.yml)); its logs and screenshots are on the [`verify-results`](https://github.com/ohjay-official/sealpay/tree/verify-results) branch.
+It runs the types, 132 tests, mutation testing (with the official Cashu NUT-00 and NUT-12 vectors and fuzzing), the Go/No-Go on the real test mint, the app build against its 60 KB budget, and the judge's demo in a real browser, including opening with no data, slow 3G and the data a payment uses. CI runs the same on every push ([verify.yml](.github/workflows/verify.yml)); its logs and screenshots are on the [`verify-results`](https://github.com/ohjay-official/sealpay/tree/verify-results) branch.
 
 </details>
 
@@ -53,7 +53,7 @@ It runs the types, 123 tests (with the official Cashu NUT-00 and NUT-12 vectors 
   | Opening the app after the first visit | 0 bytes: opens and makes a pay code with no data |
   | Saving everything to a backup file | Sales screen: **Save a backup file** |
 
-- **Tested hard.** 123 tests: every refusal, parser differential cases, 3,000-run fuzzing of genuine receipts and locks, mutation testing (once, by hand, on the rule layer: each rule broken on purpose, 20 of 20 caught), an in-memory mint with real curve math for every money path, and 3,000 random edits to receipts. Two reviews by separate AI agents that hadn't written the code, every finding fixed or stated, and static analysis ([docs/SECURITY.md](docs/SECURITY.md)).
+- **Audited like money software.** 132 tests (every refusal, parser differential cases, fuzzing, an in-memory mint with real curve math for every money path, money invariants over random sales), mutation testing on every push (26 rules broken on purpose, 26 caught), two static analysers (CodeQL, Semgrep) and npm audit, and seven review passes by separate Claude agents that hadn't written the code: functional, state and access, financial, adversarial, and final independent reviews. Every finding fixed or stated ([docs/SECURITY.md](docs/SECURITY.md)).
 - Real-money run on a mainnet mint: TBD-post-build: two-phone run on Minibits with the steps and amounts.
 - Trader visits: TBD-post-build: what 5 traders and POS agents near Bowen University, Iwo, said (docs/TRADERS.md).
 
@@ -73,7 +73,7 @@ Who has the problem: in a Punch survey of 330 traders in four Lagos markets, 52%
 
 | Piece | State |
 |---|---|
-| Offline receipt check ([src/verify](src/verify)) | Done; reviewed twice by separate AI agents |
+| Offline receipt check ([src/verify](src/verify)) | Done; seven review passes by separate AI agents, mutation-tested on every push |
 | Customer pays from any Lightning wallet ([web/src/pay](web/src/pay), [src/wallet/pay.ts](src/wallet/pay.ts)) | Done on the test mint; lost answers recovered (NUT-09) |
 | Trader app: setup, recovery code, PIN, price, pay code, scan, verdict, sales | Done |
 | Collect and cash out to a Lightning invoice ([src/wallet/collect.ts](src/wallet/collect.ts)) | Done |
@@ -140,13 +140,13 @@ There is no Sealpay server. The site is static files on Vercel; the phones talk 
 ## Security
 
 - **What green means:** the receipt was signed by the trader's chosen mint for exactly those amounts (DLEQ against the saved key for each amount), every proof is locked to the trader's key with no way back for the payer, it was not accepted before on this phone, and what lands after the mint's fee covers the price. Signatures are checked before anything else, so a forged receipt is only ever "Not signed by your mint", never a story like "short by 500".
-- **Least privilege:** checking needs only the public key; the private key is derived from a 16-byte seed kept encrypted with the PIN (PBKDF2-SHA256, 600,000 rounds, AES-GCM) and is unlocked only to collect or cash out. Collected money stays locked to the trader.
+- **Least privilege:** checking needs only the public key; the private key is derived from a 16-byte seed kept encrypted with the PIN (PBKDF2-SHA256, 600,000 rounds, AES-GCM) and is unlocked only to collect, cash out or save a backup. Collected money stays locked to the trader. Backups leave the seed out, so a backup file alone spends nothing.
 - **Validated inputs:** pay links, receipts (Sealpay's own strict cashuB reader), lock secrets (a narrow JSON parser so the phone and the mint can't read one secret two ways) and every mint answer are checked field by field.
 - **Small attack surface:** static site, strict Content Security Policy (scripts from this site only; calls only to the test mint, Minibits and CoinGecko), no third-party scripts, no cookies (after each deploy CI fails if any page sets one), no analytics.
 - **Proven libraries:** [@noble/curves](https://github.com/paulmillr/noble-curves) and [@noble/hashes](https://github.com/paulmillr/noble-hashes) (audited) for the curve and hash math; the PIN lock uses the browser's built-in WebCrypto.
-- **How it was reviewed:** functional, adversarial, fuzzing, mutation, real-mint, curve-vector, static analysis (CodeQL, npm audit) and independent-review passes, each with what it found and what was fixed: [docs/SECURITY.md](docs/SECURITY.md).
+- **How it was reviewed:** 20 passes so far, each a different purpose or method: functional, state and access, financial logic, adversarial scenarios, fuzzing and invariants, mutation testing, real-mint end to end, curve vectors, two static analysers, and independent final reviews. Each with what it found and what was fixed: [docs/SECURITY.md](docs/SECURITY.md).
 
-**What it doesn't promise:** the mint holds the bitcoin until the trader cashes out (custodial ecash), so a mint that fails or cheats can lose that float; Sealpay sweeps to the trader's own wallet and says to keep small amounts there. Offline, it can't know whether the same receipt was accepted on another phone that shares the trader's key.
+**What it doesn't promise:** the mint holds the bitcoin until the trader cashes out (custodial ecash), so a mint that fails or cheats can lose that float; the trader cashes out to their own Lightning wallet by pasting an invoice (no automatic sweep yet), and Sealpay says to keep small amounts there. Offline, it can't know whether the same receipt was accepted on another phone that shares the trader's key. After a restore, the online check catches receipts already collected, but not ones the old phone accepted and never collected.
 
 ## Privacy
 
