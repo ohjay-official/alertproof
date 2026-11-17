@@ -21,6 +21,12 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 | Nov 19 | Everything frozen except fixes | |
 | Nov 20 midday | Submit once | |
 
+## Status change (Nov 17)
+
+- **Not submitting to Dakar Bitcoin Hack** (his call, Nov 17: five other engagements). Retargeting the same build.
+- **New target: Nut November 2026** (nutnovember.org), the Cashu community hackathon. Building Nov 1 to 27; **submissions close Nov 27, 23:59 UTC (Nov 28, 00:59 Lagos)**; winners Nov 30. Solo allowed; AI-written code allowed; must be public, open source and use Cashu (Sealpay: MIT, Cashu at its core). Only November work is judged (Sealpay's first commit is Nov 11, so all of it counts). Five community prizes plus a Value4Value track, in sats. Submit at nutnovember.org/form.
+- Later: OpenSats grant (applications open in the first two months of each quarter, so Jan to Feb 2027).
+
 ## Decisions
 
 - Nov 11: Sealpay chosen (Cashu ecash locked to the trader's key, checked offline with DLEQ). Name chosen for being clear to anyone.
