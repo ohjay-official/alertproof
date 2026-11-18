@@ -3,49 +3,184 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sealpay: payments a fake alert can't fake</title>
-  <meta name="description" content="For market traders and POS agents: scan the customer's receipt and your phone says Paid or Not paid in under a second, even with no data. Bitcoin, Lightning and Cashu ecash.">
+  <title>Sealpay: payments a fake alert can’t fake</title>
+  <meta name="description" content="For market traders and POS agents: scan the customer’s receipt and your own phone says Paid or Not paid in under a second, even with no data.">
   <meta name="theme-color" content="#0f3d2e">
   <link rel="canonical" href="https://sealpay-beta.vercel.app/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/adventor-bold.woff" as="font" type="font/woff" crossorigin>
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Sealpay: payments a fake alert can't fake">
-  <meta property="og:description" content="Scan the customer's receipt. Your phone says Paid or Not paid, even with no data.">
+  <meta property="og:site_name" content="Sealpay">
+  <meta property="og:title" content="Sealpay: payments a fake alert can’t fake">
+  <meta property="og:description" content="For market traders and POS agents: scan the customer’s receipt and your own phone says Paid or Not paid in under a second, even with no data.">
   <meta property="og:url" content="https://sealpay-beta.vercel.app/">
   <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
   <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/styles.css">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sealpay","applicationCategory":"FinanceApplication","operatingSystem":"Android, iOS (web app)","url":"https://sealpay-beta.vercel.app/","description":"Market traders confirm Bitcoin payments in one scan, even with no data on their phone.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+  <link rel="stylesheet" href="/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Sealpay","applicationCategory":"FinanceApplication","operatingSystem":"Android, iOS (web app)","url":"https://sealpay-beta.vercel.app/","description":"For market traders and POS agents: scan the customer’s receipt and your own phone says Paid or Not paid in under a second, even with no data.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 </head>
 <body>
-  <main>
-    <p class="mark">Sealpay</p>
-    <h1>Payments a fake alert can't fake.</h1>
-    <p class="lead">For market traders and POS agents. The customer pays from any Lightning wallet and shows you a receipt. You scan it, and your phone says <strong>Paid</strong> or <strong>Not paid</strong> in under a second, even with no data.</p>
-    <p><a class="button" href="/app#demo">Try the demo (fake sats)</a></p>
-    <p class="links"><a href="/app">Open the trader app</a></p>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Sealpay home"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+    <nav class="nav" aria-label="Main"><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a></nav>
+    <span class="head-cta"><a class="btn" href="/app#demo">Try the demo</a></span>
+    <details class="menu">
+      <summary aria-label="Open the menu">Menu</summary>
+      <nav class="menu-panel" aria-label="Main"><a href="/" aria-current="page">Home</a><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a><a href="/about">About</a><a class="btn" href="/app#demo">Try the demo</a></nav>
+    </details>
+  </div>
+</header>
+<main id="main">
+<section class="hero">
+  <div class="wrap split">
+    <div>
+      <p class="kicker">For market traders and POS agents</p>
+      <h1>Payments a fake alert can’t fake.</h1>
+      <p class="lede">The customer pays from any Lightning wallet and shows you a receipt. You scan it, and your own phone says <strong>Paid</strong> or <strong>Not paid</strong> in under a second. With no data.</p>
+      <div class="actions">
+        <a class="btn" href="/app#demo">Try the demo</a>
+        <a class="btn line" href="/how-it-works">See how it works</a>
+      </div>
+      <p class="small after-actions">The demo runs on fake sats. One phone plays both the trader and the customer.</p>
+    </div>
+    <figure>
+      <div class="phone"><img src="/img/paid.webp" width="600" height="1298" alt="The trader’s phone after a scan: a full green screen with a Paid stamp and ₦2,000"></div>
+      <figcaption>A real check, on the test mint, with the phone’s network switched off.</figcaption>
+    </figure>
+  </div>
+</section>
 
-    <h2>How it works</h2>
-    <ol class="steps">
-      <li>Type the price in naira or CFA and show your pay code.</li>
-      <li>The customer scans it and pays from their own Lightning wallet. They get a receipt.</li>
-      <li>You scan their receipt. Your phone checks it by itself, with no internet.</li>
+<section class="band-paper">
+  <div class="wrap">
+    <div class="prose">
+      <h2>A credit alert is only a message.</h2>
+      <p>At the stall, a sale closes when the customer shows a screen. Fake alert apps print convincing ones, screenshots are easy to edit, and on a bad network even the real alert arrives late. In a Punch survey of 330 traders in four Lagos markets, 52% had received a fake alert at least once.</p>
+      <p class="cite">Source: <a href="https://punchng.com/how-fake-alerts-network-glitches-undermine-digital-trust-in-lagos-markets/">Punch, February 15, 2025</a>.</p>
+    </div>
+    <div class="compare">
+      <div class="before">
+        <h3>Today</h3>
+        <ul>
+          <li>You trust whatever is on the customer’s screen.</li>
+          <li>You wait for your own alert, and the queue waits with you.</li>
+          <li>If it never comes, the goods are already gone.</li>
+        </ul>
+      </div>
+      <div class="after">
+        <h3>With Sealpay</h3>
+        <ul>
+          <li>Only your own phone’s check counts.</li>
+          <li>It reads the mint’s seal on the receipt, with no internet.</li>
+          <li>Edited, copied or made-up receipts turn red before the goods move.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="prose">
+      <h2>One scan, three answers.</h2>
+      <p>The whole screen changes colour, the phone speaks the result and buzzes, so a trader with busy hands knows without reading.</p>
+    </div>
+    <div class="verdicts">
+      <figure>
+        <div class="phone"><img src="/img/paid.webp" width="600" height="1298" loading="lazy" alt="Green Paid screen showing ₦2,000"></div>
+        <figcaption><b>Paid</b>Signed by your mint, locked to you, never seen before. Release the goods.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><img src="/img/used.webp" width="600" height="1298" loading="lazy" alt="Red Already used screen"></div>
+        <figcaption><b>Already used</b>A receipt shown a second time. The money came in once, the first time.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><img src="/img/not-paid.webp" width="600" height="1298" loading="lazy" alt="Red Not paid screen: Not signed by your mint"></div>
+        <figcaption><b>Not paid</b>Edited, invented, or meant for someone else. Keep the goods.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band-paper">
+  <div class="wrap">
+    <h2>How a sale goes</h2>
+    <ol class="steps row">
+      <li><div><h3>Type the price</h3><p>In naira or CFA, on a keypad that works like a POS terminal. Your phone shows a pay code.</p></div></li>
+      <li><div><h3>The customer pays</h3><p>They scan the code and pay from the Lightning wallet they already use. Their phone gets a receipt.</p></div></li>
+      <li><div><h3>You scan the receipt</h3><p>Your phone checks it by itself and says Paid or Not paid. Collect the money later, when you have data.</p></div></li>
     </ol>
+    <div class="actions"><a class="btn line" href="/how-it-works">The full walk-through</a></div>
+  </div>
+</section>
 
-    <h2>Why a fake can't pass</h2>
-    <ul class="why">
-      <li>The receipt is signed by the mint. An edited amount or a made-up receipt fails the check.</li>
-      <li>The money is locked to your key. The customer can't take it back or spend it elsewhere.</li>
-      <li>Your phone remembers every receipt. Showing one twice says "Already used".</li>
-      <li>Only your own phone's check counts. A screenshot or an alert on the customer's phone means nothing.</li>
-    </ul>
+<section class="band-brand">
+  <div class="wrap">
+    <div class="prose">
+      <h2>Built for a stall, not a showroom.</h2>
+      <p>Measured on every update to the code, not promised.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>0 bytes</dt><dd>to check a receipt. The check runs on the trader’s phone and sends nothing anywhere.</dd></div>
+      <div><dt>46.5 KB</dt><dd>for the trader app’s first load. After that it opens with no data at all.</dd></div>
+      <div><dt>46.4 KB</dt><dd>of data for a customer’s whole payment, page included.</dd></div>
+      <div><dt>Naira and CFA</dt><dd>prices in the trader’s money, with the rate’s age always shown.</dd></div>
+      <div><dt>English and French</dt><dd>on the verdict screens and in the spoken result.</dd></div>
+    </dl>
+  </div>
+</section>
 
-    <footer>
-      <p>Built for Dakar Bitcoin Hack 2026. <a href="https://github.com/ohjay-official/sealpay">Code</a>, <a href="/privacy">privacy</a>, <a href="/terms">terms</a>.</p>
-    </footer>
-  </main>
+<section>
+  <div class="wrap">
+    <h2>Where to next</h2>
+    <div class="next">
+      <a href="/traders"><span class="t">For traders</span><span class="d">Setting up, a day at the stall, collecting and cashing out.</span></a>
+      <a href="/paying"><span class="t">Paying with Sealpay</span><span class="d">For customers: no new app, any Lightning wallet.</span></a>
+      <a href="/security"><span class="t">Why a fake can’t pass</span><span class="d">What Paid means, what it doesn’t, and how it was tested.</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+        <p class="foot-tag">Payments a fake alert can&rsquo;t fake.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/traders">For traders</a></li>
+          <li><a href="/paying">Paying with Sealpay</a></li>
+          <li><a href="/app#demo">Try the demo</a></li>
+          <li><a href="/app">Open the trader app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Trust</h2>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">Questions</a></li>
+          <li><a href="https://github.com/ohjay-official/sealpay">Code on GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">Sealpay is open source under the MIT licence. It is early software: the demo uses fake sats on a public test mint.</p>
+  </div>
+</footer>
 </body>
 </html>

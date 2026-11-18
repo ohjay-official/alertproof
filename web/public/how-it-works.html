@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How it works | Sealpay</title>
+  <meta name="description" content="From the price to the cash-out: how a Sealpay receipt is sealed by the mint, locked to the trader, and checked on the trader’s phone with no data.">
+  <meta name="theme-color" content="#0f3d2e">
+  <link rel="canonical" href="https://sealpay-beta.vercel.app/how-it-works">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/adventor-bold.woff" as="font" type="font/woff" crossorigin>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sealpay">
+  <meta property="og:title" content="How it works | Sealpay">
+  <meta property="og:description" content="From the price to the cash-out: how a Sealpay receipt is sealed by the mint, locked to the trader, and checked on the trader’s phone with no data.">
+  <meta property="og:url" content="https://sealpay-beta.vercel.app/how-it-works">
+  <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
+  <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Sealpay home"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+    <nav class="nav" aria-label="Main"><a href="/how-it-works" aria-current="page">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a></nav>
+    <span class="head-cta"><a class="btn" href="/app#demo">Try the demo</a></span>
+    <details class="menu">
+      <summary aria-label="Open the menu">Menu</summary>
+      <nav class="menu-panel" aria-label="Main"><a href="/">Home</a><a href="/how-it-works" aria-current="page">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a><a href="/about">About</a><a class="btn" href="/app#demo">Try the demo</a></nav>
+    </details>
+  </div>
+</header>
+<main id="main">
+<header class="page-head">
+  <div class="wrap">
+    <h1>How a payment gets sealed.</h1>
+    <p class="lede">Six steps, from the price to the trader’s own wallet. Every screen below is the real app on the public test mint.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="walk">
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/price.webp" width="600" height="1298" loading="lazy" alt="Price screen with ₦2,000 typed on a keypad"></div></figure>
+        <div class="prose">
+          <p class="num">Step 1</p>
+          <h2>The trader types the price.</h2>
+          <p>In naira or CFA, on a keypad laid out like a POS terminal. The app turns it into sats using a rate it saved while online, and always shows how old that rate is.</p>
+        </div>
+      </div>
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/pay-code.webp" width="600" height="1298" loading="lazy" alt="Pay code screen with a QR code for ₦2,000"></div></figure>
+        <div class="prose">
+          <p class="num">Step 2</p>
+          <h2>A pay code appears.</h2>
+          <p>It holds the shop’s name, the amount and the trader’s public key. Nothing secret. Making it needs no data, so the trader’s phone can stay offline all day.</p>
+        </div>
+      </div>
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/pay-page.webp" width="600" height="1298" loading="lazy" alt="The customer’s pay page: Pay Mama Nkechi’s Fabrics ₦2,000"></div></figure>
+        <div class="prose">
+          <p class="num">Step 3</p>
+          <h2>The customer pays from their own wallet.</h2>
+          <p>Their camera opens Sealpay’s pay page in the browser. No new app, no sign-up. They pay a normal Lightning invoice from the wallet they already use. The page checks that the naira price on the code matches the sats it asks for, so a swapped code can’t hide a bigger amount.</p>
+        </div>
+      </div>
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/receipt.webp" width="600" height="1298" loading="lazy" alt="The customer’s receipt shown as a QR code"></div></figure>
+        <div class="prose">
+          <p class="num">Step 4</p>
+          <h2>The mint seals the payment.</h2>
+          <p>Once the invoice is paid, the mint issues the money as Cashu ecash and signs it. Two things make it a seal rather than a message:</p>
+          <ul class="checks">
+            <li><strong>A signature anyone can check offline.</strong> The mint attaches a proof (Cashu’s NUT-12) that it really signed this exact amount. Change one number and the proof breaks.</li>
+            <li><strong>A lock to the trader.</strong> The money is locked to the trader’s key (NUT-11). The customer can’t spend it elsewhere or take it back.</li>
+          </ul>
+          <p>The customer’s page shows the receipt as a QR code that plays in parts, so a cheap camera can read it.</p>
+        </div>
+      </div>
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/paid.webp" width="600" height="1298" loading="lazy" alt="Green Paid screen after the trader’s scan"></div></figure>
+        <div class="prose">
+          <p class="num">Step 5</p>
+          <h2>The trader scans it. No data needed.</h2>
+          <p>The trader’s phone saved the mint’s public keys while it was online. It checks the seal against them, checks the lock is to its own key, and checks it has never seen this receipt before. Then the whole screen turns green, and the phone says “Paid, 2000 naira” out loud.</p>
+          <p>A second scan of the same receipt says Already used. A receipt from another mint, an edited amount or one locked to someone else says Not paid.</p>
+        </div>
+      </div>
+      <div class="stop">
+        <figure><div class="phone"><img src="/img/sales.webp" width="600" height="1298" loading="lazy" alt="Sales screen with today’s sale waiting to be collected"></div></figure>
+        <div class="prose">
+          <p class="num">Step 6</p>
+          <h2>Collect and cash out, later.</h2>
+          <p>When the trader has data, one button collects the day’s payments: the mint swaps them for fresh money, still locked to the trader. Cashing out pays a Lightning invoice from the trader’s own wallet, which can be one that pays out in naira or CFA.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band-paper">
+  <div class="wrap split">
+    <div class="prose">
+      <h2>What it can’t promise.</h2>
+      <p>Honest limits, stated where they matter.</p>
+      <ul class="checks limits">
+        <li>The mint holds the money until the trader cashes out. A mint that fails could lose it, so keep small amounts there and cash out often.</li>
+        <li>The customer’s phone needs data to pay. It’s the trader’s phone that needs none.</li>
+        <li>If two phones share one shop, each only knows the receipts it scanned itself.</li>
+      </ul>
+    </div>
+    <div class="prose">
+      <h2>Why Cashu.</h2>
+      <p>Lightning can’t pay a phone that’s offline. Cashu ecash can: the proof of payment travels with the receipt, so the trader’s phone can check it on the spot. The closest product, the Cashu team’s Numo, is the mirror image: its customer can be offline but its merchant must be online. Sealpay works when the trader isn’t.</p>
+      <p><a href="/security">More on what Paid means</a></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Keep going</h2>
+    <div class="next">
+      <a href="/traders"><span class="t">For traders</span><span class="d">What you need, setup, and a day at the stall.</span></a>
+      <a href="/paying"><span class="t">Paying</span><span class="d">The customer’s side, step by step.</span></a>
+      <a href="/app#demo"><span class="t">Try the demo</span><span class="d">All six steps on one phone, with fake sats.</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+        <p class="foot-tag">Payments a fake alert can&rsquo;t fake.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/traders">For traders</a></li>
+          <li><a href="/paying">Paying with Sealpay</a></li>
+          <li><a href="/app#demo">Try the demo</a></li>
+          <li><a href="/app">Open the trader app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Trust</h2>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">Questions</a></li>
+          <li><a href="https://github.com/ohjay-official/sealpay">Code on GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">Sealpay is open source under the MIT licence. It is early software: the demo uses fake sats on a public test mint.</p>
+  </div>
+</footer>
+</body>
+</html>

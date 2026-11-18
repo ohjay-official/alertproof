@@ -3,24 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Terms: Sealpay</title>
-  <meta name="description" content="Sealpay is hackathon software: use it at your own risk, with small amounts.">
+  <title>Terms | Sealpay</title>
+  <meta name="description" content="Sealpay is early, open source software offered as is. What the demo, the mint and the check do and don’t cover.">
+  <meta name="theme-color" content="#0f3d2e">
   <link rel="canonical" href="https://sealpay-beta.vercel.app/terms">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/adventor-bold.woff" as="font" type="font/woff" crossorigin>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sealpay">
+  <meta property="og:title" content="Terms | Sealpay">
+  <meta property="og:description" content="Sealpay is early, open source software offered as is. What the demo, the mint and the check do and don’t cover.">
+  <meta property="og:url" content="https://sealpay-beta.vercel.app/terms">
+  <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
+  <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-  <main>
-    <p class="mark"><a href="/">Sealpay</a></p>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Sealpay home"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+    <nav class="nav" aria-label="Main"><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a></nav>
+    <span class="head-cta"><a class="btn" href="/app#demo">Try the demo</a></span>
+    <details class="menu">
+      <summary aria-label="Open the menu">Menu</summary>
+      <nav class="menu-panel" aria-label="Main"><a href="/">Home</a><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq">Questions</a><a href="/about">About</a><a class="btn" href="/app#demo">Try the demo</a></nav>
+    </details>
+  </div>
+</header>
+<main id="main">
+<header class="page-head">
+  <div class="wrap">
     <h1>Terms</h1>
-    <p class="lead">Sealpay was built for Dakar Bitcoin Hack 2026. It is early software, offered as is, with no warranty.</p>
-    <ul>
-      <li><strong>Demo and test mint:</strong> fake sats only. Nothing there is real money.</li>
-      <li><strong>Real money:</strong> a Cashu mint holds the bitcoin until you cash out to your own Lightning wallet. If the mint fails or cheats, that money can be lost. Use a mint you trust, keep small amounts there and cash out often.</li>
-      <li><strong>Your recovery code</strong> is the only way to get your money back on a new phone. Write it down and keep it safe. Nobody can reset it for you.</li>
-      <li><strong>The check</strong> tells you a receipt was signed by your mint, is locked to you and was not used on this phone before. It can not stop a mint from failing later.</li>
-    </ul>
-    <p>The code is open source under the MIT licence: <a href="https://github.com/ohjay-official/sealpay">github.com/ohjay-official/sealpay</a>.</p>
-  </main>
+    <p class="lede">Sealpay is early software, offered as is, with no warranty.</p>
+  </div>
+</header>
+<section>
+  <div class="wrap prose">
+    <dl class="facts">
+      <div><dt>Demo and test mint</dt><dd>Fake sats only. Nothing there is real money.</dd></div>
+      <div><dt>Real money</dt><dd>A Cashu mint holds the bitcoin until you cash out to your own Lightning wallet. If the mint fails or cheats, that money can be lost. Use a mint you trust, keep small amounts there and cash out often.</dd></div>
+      <div><dt>Your recovery code</dt><dd>The only way to get your shop key back on a new phone. Write it down and keep it safe. Nobody can reset it for you.</dd></div>
+      <div><dt>The check</dt><dd>Tells you a receipt was signed by your mint, is locked to you and was not used on this phone before. It can’t stop a mint from failing later.</dd></div>
+    </dl>
+    <p>The code is open source under the MIT licence: <a href="https://github.com/ohjay-official/sealpay">github.com/ohjay-official/sealpay</a>. The site’s fonts are TeX Gyre Adventor (GUST Font License) and Lora (SIL Open Font License).</p>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+        <p class="foot-tag">Payments a fake alert can&rsquo;t fake.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/traders">For traders</a></li>
+          <li><a href="/paying">Paying with Sealpay</a></li>
+          <li><a href="/app#demo">Try the demo</a></li>
+          <li><a href="/app">Open the trader app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Trust</h2>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">Questions</a></li>
+          <li><a href="https://github.com/ohjay-official/sealpay">Code on GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">Sealpay is open source under the MIT licence. It is early software: the demo uses fake sats on a public test mint.</p>
+  </div>
+</footer>
 </body>
 </html>

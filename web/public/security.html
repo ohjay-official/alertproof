@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security | Sealpay</title>
+  <meta name="description" content="What a green Paid screen promises, what it doesn’t, and how Sealpay was reviewed and tested.">
+  <meta name="theme-color" content="#0f3d2e">
+  <link rel="canonical" href="https://sealpay-beta.vercel.app/security">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/adventor-bold.woff" as="font" type="font/woff" crossorigin>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sealpay">
+  <meta property="og:title" content="Security | Sealpay">
+  <meta property="og:description" content="What a green Paid screen promises, what it doesn’t, and how Sealpay was reviewed and tested.">
+  <meta property="og:url" content="https://sealpay-beta.vercel.app/security">
+  <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
+  <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Sealpay home"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+    <nav class="nav" aria-label="Main"><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security" aria-current="page">Security</a><a href="/faq">Questions</a></nav>
+    <span class="head-cta"><a class="btn" href="/app#demo">Try the demo</a></span>
+    <details class="menu">
+      <summary aria-label="Open the menu">Menu</summary>
+      <nav class="menu-panel" aria-label="Main"><a href="/">Home</a><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security" aria-current="page">Security</a><a href="/faq">Questions</a><a href="/about">About</a><a class="btn" href="/app#demo">Try the demo</a></nav>
+    </details>
+  </div>
+</header>
+<main id="main">
+<header class="page-head">
+  <div class="wrap">
+    <h1>Why a fake can’t pass.</h1>
+    <p class="lede">Sealpay decides whether goods leave the stall, so it is built and tested like money software.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap split">
+    <div class="prose">
+      <p class="stamp">Paid</p>
+      <h2>What green means</h2>
+      <p>Before the screen turns green, the trader’s phone has checked every part of the receipt, with no internet:</p>
+      <ul class="checks">
+        <li>It was signed by the trader’s chosen mint, for exactly those amounts.</li>
+        <li>It is locked to the trader’s key, with no way back for the payer and no second key.</li>
+        <li>This phone has never accepted it before.</li>
+        <li>What lands after the mint’s fee covers the price.</li>
+      </ul>
+      <p>The signature is checked first, so a forged receipt only ever says “Not signed by your mint”, never a story a scammer can explain away.</p>
+    </div>
+    <div class="prose">
+      <h2>What it doesn’t promise</h2>
+      <ul class="checks limits">
+        <li>That the mint stays honest and solvent. It holds the money until the trader cashes out.</li>
+        <li>That a receipt wasn’t also accepted on another phone sharing the same shop.</li>
+        <li>After a restore from the recovery code alone, receipts the old phone took but never collected look unspent to the mint. Collecting often keeps that window small.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band-paper">
+  <div class="wrap">
+    <div class="prose">
+      <h2>How it was tested</h2>
+      <p>Twenty passes so far, each with a different purpose or method, every finding fixed or stated in the open.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>132 tests</dt><dd>Every refusal, parser edge cases, fuzzing, and an in-memory mint with real curve maths for every money path.</dd></div>
+      <div><dt>26 of 26</dt><dd>rules broken on purpose, each caught by a test. This mutation testing runs on every update.</dd></div>
+      <div><dt>Real mint</dt><dd>A 21-step run on the public test mint: pay, check offline, refuse replays and edits, collect, cash out.</dd></div>
+      <div><dt>Reviews</dt><dd>Seven review passes by separate AI agents that hadn’t written the code: functional, state and access, financial, adversarial, and final independent reviews. A human review is still to come.</dd></div>
+      <div><dt>Static analysis</dt><dd>CodeQL and Semgrep on every update, plus npm audit on the libraries.</dd></div>
+      <div><dt>Proven libraries</dt><dd>The audited @noble libraries for all curve and hash maths. The PIN lock uses the browser’s own WebCrypto.</dd></div>
+    </dl>
+    <div class="actions"><a class="btn line" href="https://github.com/ohjay-official/sealpay/blob/main/docs/SECURITY.md">Read every finding</a></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap split">
+    <div class="prose">
+      <h2>A small surface</h2>
+      <p>Sealpay is a set of static pages with no server of its own. Scripts load only from this site, the pages may only talk to the chosen mints and the price service, and there are no third-party scripts, no analytics and no cookies. A check after every update fails if any page ever sets one.</p>
+    </div>
+    <div class="prose">
+      <h2>Your keys</h2>
+      <p>Checking needs only the public key. The private key comes from a 16-byte seed kept encrypted with the PIN, and is unlocked only to collect, cash out or save a backup. Backups leave the seed out, so a backup file alone spends nothing.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band-paper">
+  <div class="wrap">
+    <h2>Keep going</h2>
+    <div class="next">
+      <a href="/privacy"><span class="t">Privacy</span><span class="d">What’s collected: nothing.</span></a>
+      <a href="/how-it-works"><span class="t">How it works</span><span class="d">The seal, step by step.</span></a>
+      <a href="https://github.com/ohjay-official/sealpay"><span class="t">The code</span><span class="d">Open source, MIT licence.</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+        <p class="foot-tag">Payments a fake alert can&rsquo;t fake.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/traders">For traders</a></li>
+          <li><a href="/paying">Paying with Sealpay</a></li>
+          <li><a href="/app#demo">Try the demo</a></li>
+          <li><a href="/app">Open the trader app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Trust</h2>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">Questions</a></li>
+          <li><a href="https://github.com/ohjay-official/sealpay">Code on GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">Sealpay is open source under the MIT licence. It is early software: the demo uses fake sats on a public test mint.</p>
+  </div>
+</footer>
+</body>
+</html>

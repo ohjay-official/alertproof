@@ -12,6 +12,9 @@ import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 
+import { buildSite } from './build-site.mjs';
+console.log(`site: ${buildSite()} pages`);
+
 const out = 'web/public/assets';
 rmSync(out, { recursive: true, force: true });
 

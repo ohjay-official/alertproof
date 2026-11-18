@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Questions | Sealpay</title>
+  <meta name="description" content="Answers about Sealpay for traders and customers: data, wallets, fees, lost phones, mints and what Paid means.">
+  <meta name="theme-color" content="#0f3d2e">
+  <link rel="canonical" href="https://sealpay-beta.vercel.app/faq">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/adventor-bold.woff" as="font" type="font/woff" crossorigin>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sealpay">
+  <meta property="og:title" content="Questions | Sealpay">
+  <meta property="og:description" content="Answers about Sealpay for traders and customers: data, wallets, fees, lost phones, mints and what Paid means.">
+  <meta property="og:url" content="https://sealpay-beta.vercel.app/faq">
+  <meta property="og:image" content="https://sealpay-beta.vercel.app/og.png">
+  <meta property="og:image:alt" content="Sealpay: payments a fake alert can't fake, with a green Paid stamp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Sealpay home"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+    <nav class="nav" aria-label="Main"><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq" aria-current="page">Questions</a></nav>
+    <span class="head-cta"><a class="btn" href="/app#demo">Try the demo</a></span>
+    <details class="menu">
+      <summary aria-label="Open the menu">Menu</summary>
+      <nav class="menu-panel" aria-label="Main"><a href="/">Home</a><a href="/how-it-works">How it works</a><a href="/traders">For traders</a><a href="/paying">Paying</a><a href="/security">Security</a><a href="/faq" aria-current="page">Questions</a><a href="/about">About</a><a class="btn" href="/app#demo">Try the demo</a></nav>
+    </details>
+  </div>
+</header>
+<main id="main">
+<header class="page-head">
+  <div class="wrap">
+    <h1>Questions, answered.</h1>
+    <p class="lede">Grouped by who’s asking. If yours isn’t here, the code and the full security notes are on GitHub.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="faq-group">
+      <h2>For traders</h2>
+      <div class="faq">
+        <details><summary>Do I really need no data at the stall?</summary><div><p>Checking a receipt needs none. Your phone needs data once to set up, and now and then to refresh the price and the mint’s keys, collect money and cash out. The app always shows how old its saved rate is.</p></div></details>
+        <details><summary>Do I need to download an app?</summary><div><p>No. Sealpay opens in the browser and can be added to your home screen. After the first visit it opens with no data.</p></div></details>
+        <details><summary>What if I lose my phone?</summary><div><p>Your recovery code brings your shop key to a new phone. If you saved a backup file, add it too: it brings back your money and your list of scanned receipts. Without the PIN, someone holding your old phone can’t spend what you collected.</p></div></details>
+        <details><summary>How do I get the money into naira or CFA?</summary><div><p>Cash out to your own Lightning wallet. Some Lightning wallets pay out to a bank in naira or CFA; Sealpay doesn’t handle that step.</p></div></details>
+        <details><summary>Can two of my phones share one shop?</summary><div><p>They can, but each phone only knows the receipts it scanned itself. A receipt shown on both could pass twice. For now, one phone per shop is safest.</p></div></details>
+        <details><summary>What does it cost?</summary><div><p>Sealpay is free. The mint may charge a small fee when you collect; the customer’s page adds it to their payment so you get the full price.</p></div></details>
+      </div>
+    </div>
+    <div class="faq-group">
+      <h2>For customers</h2>
+      <div class="faq">
+        <details><summary>Which wallet do I need?</summary><div><p>Any wallet that pays a Lightning invoice. You don’t need a Cashu wallet or a new app.</p></div></details>
+        <details><summary>Can I show a screenshot of my receipt?</summary><div><p>The trader’s phone reads the code, so a screenshot of a real, unused receipt works. A screenshot of one already accepted says Already used.</p></div></details>
+        <details><summary>What if I pay and the page closes?</summary><div><p>The payment is saved before the invoice appears. Open the page again and it finishes on its own.</p></div></details>
+      </div>
+    </div>
+    <div class="faq-group">
+      <h2>About the money</h2>
+      <div class="faq">
+        <details><summary>What is a mint?</summary><div><p>A service that holds bitcoin and issues Cashu ecash for it, like a market cashier who hands out signed tokens. Sealpay checks the mint’s signature; the mint holds the money until the trader cashes out.</p></div></details>
+        <details><summary>Is this real money?</summary><div><p>The demo and the test mint use fake sats. A trader can choose a real mint for real money. Keep small amounts there and cash out often.</p></div></details>
+        <details><summary>Can a scammer fake a green screen?</summary><div><p>Not on your phone. The green screen comes from your phone’s own check of the mint’s signature. A scammer can show a fake screen on their phone, which is why Sealpay never asks you to trust theirs.</p></div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band-paper">
+  <div class="wrap">
+    <h2>Still curious</h2>
+    <div class="next">
+      <a href="/security"><span class="t">Security</span><span class="d">The full list of checks and limits.</span></a>
+      <a href="/how-it-works"><span class="t">How it works</span><span class="d">Every screen, in order.</span></a>
+      <a href="/app#demo"><span class="t">Try the demo</span><span class="d">Fake sats, one phone.</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/"><img src="/favicon.svg" alt="" width="32" height="32">Sealpay</a>
+        <p class="foot-tag">Payments a fake alert can&rsquo;t fake.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/traders">For traders</a></li>
+          <li><a href="/paying">Paying with Sealpay</a></li>
+          <li><a href="/app#demo">Try the demo</a></li>
+          <li><a href="/app">Open the trader app</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Trust</h2>
+        <ul>
+          <li><a href="/security">Security</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/faq">Questions</a></li>
+          <li><a href="https://github.com/ohjay-official/sealpay">Code on GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">Sealpay is open source under the MIT licence. It is early software: the demo uses fake sats on a public test mint.</p>
+  </div>
+</footer>
+</body>
+</html>
