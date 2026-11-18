@@ -87,8 +87,8 @@ async function step(name, fn) {
 }
 
 try {
-  await step('home, privacy and terms pages load', async () => {
-    for (const [path, text] of [['/', "Payments a fake alert can't fake."], ['/privacy', 'no cookies'], ['/terms', 'as is']]) {
+  await step('every site page loads, and its menu link leads to it', async () => {
+    for (const [path, text] of [['/', 'Payments a fake alert can’t fake.'], ['/how-it-works', 'How a payment gets sealed.'], ['/traders', 'For traders and POS agents.'], ['/paying', 'Paying a Sealpay trader.'], ['/security', 'Why a fake can’t pass.'], ['/faq', 'Questions, answered.'], ['/about', 'Why Sealpay exists.'], ['/privacy', 'no cookies'], ['/terms', 'as is']]) {
       await page.goto(`${base}${path}`);
       await page.getByText(text, { exact: false }).first().waitFor();
     }
