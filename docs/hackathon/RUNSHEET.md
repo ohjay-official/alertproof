@@ -21,6 +21,11 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 | Nov 19 | Everything frozen except fixes | |
 | Nov 20 midday | Submit once | |
 
+## Parked (Nov 18)
+
+- **Sealpay is parked**, his call: no submission for now; kept for a later event. The live site stays up.
+- Options found on Nov 18 if it's picked back up: Kiroween 2026 (any app, must be built with Kiro, new projects only, closes Dec 4 22:00 UTC, $100k; would mean a Kiro rebuild); Colosseum Eternal (Solana, 4-week sprint anytime between main hackathons, $25k award, accelerator); Stellar Community Fund (up to $150k in XLM, rolling rounds); OpenSats (Jan to Feb). Solana or Stellar would need the money side redesigned (USDC-backed ecash) to keep the offline check.
+
 ## Status change (Nov 17)
 
 - **Not submitting to Dakar Bitcoin Hack** (his call, Nov 17: five other engagements). Retargeting the same build.
