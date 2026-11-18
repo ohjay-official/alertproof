@@ -1,0 +1,14 @@
+warning  js/clear-text-storage-of-sensitive-data  web/src/pay/main.ts:61  This stores sensitive data returned by [a call to fetchTrustedMint](1) as clear text.
+warning  js/stack-trace-exposure  src/wallet/test/memory-mint.ts:258  This information exposed to the user depends on [stack trace information](1).
+warning  js/file-system-race  scripts/ui-check.mjs:38  The file may have changed since it [was checked](1).
+warning  js/http-to-file-access  scripts/go-no-go.ts:399  Write to file system depends on [Untrusted data](1).
+warning  js/client-side-request-forgery  src/wallet/mint-api.ts:93  The [URL](1) of this request depends on a [user-provided value](2).
+warning  js/implicit-operand-conversion  scripts/go-no-go.ts:109  This expression will be implicitly converted from undefined to number or string.
+warning  js/implicit-operand-conversion  scripts/go-no-go.ts:185  This expression will be implicitly converted from undefined to number.
+warning  js/implicit-operand-conversion  src/verify/curve-noble.ts:53  This expression will be implicitly converted from undefined to number or string.
+warning  js/implicit-operand-conversion  src/wallet/ecash.ts:36  This expression will be implicitly converted from undefined to number or string.
+warning  js/implicit-operand-conversion  src/wallet/ecash.ts:160  This expression will be implicitly converted from undefined to number or string.
+warning  js/implicit-operand-conversion  src/wallet/keys.ts:30  This expression will be implicitly converted from undefined to number.
+warning  js/implicit-operand-conversion  src/wallet/test/memory-mint.ts:88  This expression will be implicitly converted from undefined to number.
+warning  js/property-access-on-non-object  src/verify/curve-noble.test.ts:84  The base expression of this property access is always undefined.
+warning  js/property-access-on-non-object  src/verify/curve-noble.test.ts:89  The base expression of this property access is always undefined.

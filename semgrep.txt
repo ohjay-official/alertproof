@@ -1,0 +1,3 @@
+WARNING  unknown-value-with-script-tag  src/wallet/request.test.ts:75  Cannot determine what 'r' is and it is used with a '<script>' tag. This could be susceptible to cross-site scripting (XSS). Ensure 'r' is no
+WARNING  unknown-value-with-script-tag  src/wallet/request.test.ts:75  Cannot determine what 'r' is and it is used with a '<script>' tag. This could be susceptible to cross-site scripting (XSS). Ensure 'r' is no
+1 rule errors
