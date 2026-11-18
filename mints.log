@@ -1,0 +1,13 @@
+USABLE  https://mint.minibits.cash/Bitcoin  {"v":"cdk-mintd/0.18.3","cors":"*","missing":[],"fee":[0],"ms":625}
+USABLE  https://mint.coinos.io  {"v":"Nutshell/0.22.1","cors":"*","missing":[],"fee":[100],"ms":350}
+USABLE  https://mint.macadamia.cash  {"v":"cdk-mintd/0.18.1","cors":"*","missing":[],"fee":[150],"ms":728}
+USABLE  https://mint.lnvoltz.com  {"v":"Nutshell/0.20.3","cors":"*","missing":[],"fee":[100],"ms":517}
+USABLE  https://mint.cubabitcoin.org  {"v":"Nutshell/0.22.1","cors":"*","missing":[],"fee":[100],"ms":251}
+USABLE  https://mint.agorist.space  {"v":"Nutshell/0.17.0","cors":"*","missing":[],"fee":[0],"ms":1542}
+no      https://mint.0xchat.com  {"err":"getaddrinfo ENOTFOUND mint.0xchat.com"}
+no      https://mint.lnwallet.app  {"err":"getaddrinfo ENOTFOUND mint.lnwallet.app"}
+USABLE  https://mint.chorus.community  {"v":"Nutshell/0.20.3.1","cors":"*","missing":[],"fee":[100],"ms":601}
+USABLE  https://cashu.cz  {"v":"Nutshell/0.22.1","cors":"*","missing":[],"fee":[0],"ms":613}
+no      https://8333.space:3338  {"err":"Connect Timeout Error (attempted address: 8333.space:3338, timeout: 10000ms)"}
+no      https://mint.belo.app  {"err":"getaddrinfo ENOTFOUND mint.belo.app"}
+USABLE  https://testnut.cashu.space  {"v":"cdk-mintd/0.18.1","cors":"*","missing":[],"fee":[100],"ms":204}

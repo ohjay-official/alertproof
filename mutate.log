@@ -1,0 +1,29 @@
+caught  skip the DLEQ check
+caught  skip the trusted-mint check
+caught  skip the NUT-11 support check
+caught  skip the unit check
+caught  off-by-one on the amount
+caught  ignore the collect fee
+caught  allow the same proof twice
+caught  skip the lock check
+caught  skip keyset expiry
+caught  skip the missing-key check
+caught  allow dust proofs
+caught  record replays as new
+caught  accept too many proofs
+caught  accept any key
+caught  allow a refund path
+caught  allow shared keys
+caught  allow unknown tags
+caught  allow SIG_ALL
+caught  allow whitespace around the lock
+caught  allow extra fields
+caught  allow duplicate keys
+caught  allow http mints
+caught  allow trailing bytes
+caught  allow duplicate map keys
+caught  skip the frame check
+caught  allow uppercase keys
+
+26 of 26 mutations caught
+PASS

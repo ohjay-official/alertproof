@@ -1,0 +1,52 @@
+{
+  "files": {
+    "app.js": {
+      "bytes": 41915,
+      "gzip": 16170
+    },
+    "chunk-5YWY5JMQ.js": {
+      "bytes": 130524,
+      "gzip": 47037
+    },
+    "chunk-EZ4WPP63.js": {
+      "bytes": 282,
+      "gzip": 218
+    },
+    "chunk-KJ3FXQ36.js": {
+      "bytes": 82628,
+      "gzip": 30535
+    },
+    "pay.js": {
+      "bytes": 5876,
+      "gzip": 2529
+    }
+  },
+  "firstLoadGzip": {
+    "trader": 49743,
+    "customer": 35915
+  },
+  "budgetGzip": 61440,
+  "contents": {
+    "app.js": {
+      "web/src": 28717,
+      "src/verify": 5287,
+      "src/wallet": 3921,
+      "src/app": 3511
+    },
+    "pay.js": {
+      "web/src": 5651
+    },
+    "chunk-KJ3FXQ36.js": {
+      "@noble/curves": 35169,
+      "src/wallet": 19448,
+      "uqr": 10329,
+      "@noble/hashes": 8697,
+      "src/verify": 5576,
+      "web/src": 2937
+    },
+    "chunk-5YWY5JMQ.js": {
+      "jsqr": 130462
+    },
+    "chunk-EZ4WPP63.js": {}
+  }
+}

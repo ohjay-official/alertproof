@@ -1,0 +1,148 @@
+[
+  {
+    "url": "https://mint.minibits.cash/Bitcoin",
+    "version": "cdk-mintd/0.18.3",
+    "cors": "*",
+    "ms": 625,
+    "missing": [],
+    "meltMax": 1000000,
+    "mintMax": 1000000,
+    "satKeysets": 1,
+    "feePpk": [
+      0
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.coinos.io",
+    "version": "Nutshell/0.22.1",
+    "cors": "*",
+    "ms": 350,
+    "missing": [],
+    "meltMax": null,
+    "mintMax": null,
+    "satKeysets": 1,
+    "feePpk": [
+      100
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.macadamia.cash",
+    "version": "cdk-mintd/0.18.1",
+    "cors": "*",
+    "ms": 728,
+    "missing": [],
+    "meltMax": 150000,
+    "mintMax": 150000,
+    "satKeysets": 1,
+    "feePpk": [
+      150
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.lnvoltz.com",
+    "version": "Nutshell/0.20.3",
+    "cors": "*",
+    "ms": 517,
+    "missing": [],
+    "meltMax": 50000,
+    "mintMax": 1000000,
+    "satKeysets": 1,
+    "feePpk": [
+      100
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.cubabitcoin.org",
+    "version": "Nutshell/0.22.1",
+    "cors": "*",
+    "ms": 251,
+    "missing": [],
+    "meltMax": null,
+    "mintMax": null,
+    "satKeysets": 1,
+    "feePpk": [
+      100
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.agorist.space",
+    "version": "Nutshell/0.17.0",
+    "cors": "*",
+    "ms": 1542,
+    "missing": [],
+    "meltMax": null,
+    "mintMax": null,
+    "satKeysets": 1,
+    "feePpk": [
+      0
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://mint.0xchat.com",
+    "error": "getaddrinfo ENOTFOUND mint.0xchat.com",
+    "usable": false
+  },
+  {
+    "url": "https://mint.lnwallet.app",
+    "error": "getaddrinfo ENOTFOUND mint.lnwallet.app",
+    "usable": false
+  },
+  {
+    "url": "https://mint.chorus.community",
+    "version": "Nutshell/0.20.3.1",
+    "cors": "*",
+    "ms": 601,
+    "missing": [],
+    "meltMax": null,
+    "mintMax": null,
+    "satKeysets": 1,
+    "feePpk": [
+      100
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://cashu.cz",
+    "version": "Nutshell/0.22.1",
+    "cors": "*",
+    "ms": 613,
+    "missing": [],
+    "meltMax": null,
+    "mintMax": null,
+    "satKeysets": 1,
+    "feePpk": [
+      0
+    ],
+    "usable": true
+  },
+  {
+    "url": "https://8333.space:3338",
+    "error": "Connect Timeout Error (attempted address: 8333.space:3338, timeout: 10000ms)",
+    "usable": false
+  },
+  {
+    "url": "https://mint.belo.app",
+    "error": "getaddrinfo ENOTFOUND mint.belo.app",
+    "usable": false
+  },
+  {
+    "url": "https://testnut.cashu.space",
+    "version": "cdk-mintd/0.18.1",
+    "cors": "*",
+    "ms": 204,
+    "missing": [],
+    "meltMax": 500000,
+    "mintMax": 500000,
+    "satKeysets": 1,
+    "feePpk": [
+      100
+    ],
+    "usable": true
+  }
+]

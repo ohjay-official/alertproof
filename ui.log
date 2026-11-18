@@ -1,0 +1,19 @@
+PASS  every site page loads
+PASS  welcome screen loads
+PASS  demo stall sets up on the test mint
+PASS  type ₦2,000 on the keypad  (2,286 sats)
+PASS  pay code shows a QR
+PASS  customer pays the test mint and gets a receipt  (The customer's receipt (3,128 characters))
+PASS  checked with the network off: Paid  (Checked on this phone in 26 ms with the network off (0 requests).)
+PASS  same receipt again: Already used
+PASS  edited receipt: Not paid  (Not signed by your mint.)
+PASS  sales screen lists the sale (tapped, no reload)
+PASS  collect with the PIN (network back on)
+PASS  the app opens and makes a pay code with no data at all
+PASS  customer pay page opens from a pay link
+PASS  slow 3G: the trader app is usable from a cold start  (7.2 s, 53.0 KB)
+PASS  customer pays through the real pay page (data used, end to end)  (page 40.4 KB + payment 7.1 KB)
+PASS  no console errors
+
+16/16 steps passed
+PASS

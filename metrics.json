@@ -1,0 +1,11 @@
+{
+  "slow3g": {
+    "firstVisitMs": 7154,
+    "bytes": 54256
+  },
+  "customerPayment": {
+    "pageBytes": 41364,
+    "paymentBytes": 7298,
+    "totalBytes": 48662
+  }
+}

@@ -1,0 +1,807 @@
+
+> sealpay@0.1.0 test
+> node --test "src/**/*.test.ts"
+
+TAP version 13
+# Subtest: happy path: a real-looking receipt for exactly the asked amount is green
+ok 1 - happy path: a real-looking receipt for exactly the asked amount is green
+  ---
+  duration_ms: 3.607059
+  type: 'test'
+  ...
+# Subtest: overpayment is shown, sticker payments with no amount set pass
+ok 2 - overpayment is shown, sticker payments with no amount set pass
+  ---
+  duration_ms: 1.510929
+  type: 'test'
+  ...
+# Subtest: underpaid, but only after every signature checks out
+ok 3 - underpaid, but only after every signature checks out
+  ---
+  duration_ms: 1.380154
+  type: 'test'
+  ...
+# Subtest: NUT-02 input fees are reported, rounded up
+ok 4 - NUT-02 input fees are reported, rounded up
+  ---
+  duration_ms: 2.521057
+  type: 'test'
+  ...
+# Subtest: edited amount: the signature is per amount key, so it fails
+ok 5 - edited amount: the signature is per amount key, so it fails
+  ---
+  duration_ms: 0.254402
+  type: 'test'
+  ...
+# Subtest: edited secret, copied signature, swapped DLEQ values all fail
+ok 6 - edited secret, copied signature, swapped DLEQ values all fail
+  ---
+  duration_ms: 1.676448
+  type: 'test'
+  ...
+# Subtest: a token from an attacker's own mint, relabelled with the trusted URL, fails
+ok 7 - a token from an attacker's own mint, relabelled with the trusted URL, fails
+  ---
+  duration_ms: 0.510857
+  type: 'test'
+  ...
+# Subtest: a token from a mint the trader did not choose fails, in any spelling
+ok 8 - a token from a mint the trader did not choose fails, in any spelling
+  ---
+  duration_ms: 0.721714
+  type: 'test'
+  ...
+# Subtest: a keyset from another trusted mint doesn't count for this mint
+ok 9 - a keyset from another trusted mint doesn't count for this mint
+  ---
+  duration_ms: 0.567162
+  type: 'test'
+  ...
+# Subtest: unknown keyset, amount with no key, non-sat keyset
+ok 10 - unknown keyset, amount with no key, non-sat keyset
+  ---
+  duration_ms: 0.682616
+  type: 'test'
+  ...
+# Subtest: amount keys are looked up as own properties only
+ok 11 - amount keys are looked up as own properties only
+  ---
+  duration_ms: 0.354062
+  type: 'test'
+  ...
+# Subtest: bigint amounts (cashu-ts v4) are read exactly; too-large ones are refused
+ok 12 - bigint amounts (cashu-ts v4) are read exactly; too-large ones are refused
+  ---
+  duration_ms: 0.437718
+  type: 'test'
+  ...
+# Subtest: wrong or missing unit
+ok 13 - wrong or missing unit
+  ---
+  duration_ms: 0.233841
+  type: 'test'
+  ...
+# Subtest: a mint whose cached info lacks NUT-11 or NUT-12 is refused
+ok 14 - a mint whose cached info lacks NUT-11 or NUT-12 is refused
+  ---
+  duration_ms: 0.388353
+  type: 'test'
+  ...
+# Subtest: lock problems come through with their own codes
+ok 15 - lock problems come through with their own codes
+  ---
+  duration_ms: 0.622826
+  type: 'test'
+  ...
+# Subtest: one bad proof among good ones spoils the whole receipt
+ok 16 - one bad proof among good ones spoils the whole receipt
+  ---
+  duration_ms: 0.427893
+  type: 'test'
+  ...
+# Subtest: the same proof twice in one receipt is refused (it would count double)
+ok 17 - the same proof twice in one receipt is refused (it would count double)
+  ---
+  duration_ms: 0.211578
+  type: 'test'
+  ...
+# Subtest: missing or broken DLEQ
+ok 18 - missing or broken DLEQ
+  ---
+  duration_ms: 0.378729
+  type: 'test'
+  ...
+# Subtest: broken receipt shapes never throw and never pass
+ok 19 - broken receipt shapes never throw and never pass
+  ---
+  duration_ms: 0.654202
+  type: 'test'
+  ...
+# Subtest: a curve implementation that throws is treated as a failed check
+ok 20 - a curve implementation that throws is treated as a failed check
+  ---
+  duration_ms: 0.346811
+  type: 'test'
+  ...
+# Subtest: the curve gets the right key for each amount and the right Y
+ok 21 - the curve gets the right key for each amount and the right Y
+  ---
+  duration_ms: 0.992972
+  type: 'test'
+  ...
+# Subtest: the check does not change the receipt it was given
+ok 22 - the check does not change the receipt it was given
+  ---
+  duration_ms: 0.43228
+  type: 'test'
+  ...
+# Subtest: accepted proofs carry only checked fields
+ok 23 - accepted proofs carry only checked fields
+  ---
+  duration_ms: 0.285599
+  type: 'test'
+  ...
+# Subtest: bad requested amount from our own code is a programming error
+ok 24 - bad requested amount from our own code is a programming error
+  ---
+  duration_ms: 0.669836
+  type: 'test'
+  ...
+# Subtest: replay: the same receipt scanned twice is refused the second time
+ok 25 - replay: the same receipt scanned twice is refused the second time
+  ---
+  duration_ms: 1.122566
+  type: 'test'
+  ...
+# Subtest: replay: a receipt reusing one old proof records nothing new
+ok 26 - replay: a receipt reusing one old proof records nothing new
+  ---
+  duration_ms: 0.569806
+  type: 'test'
+  ...
+# Subtest: replay: a forged or wrongly locked receipt is not recorded
+ok 27 - replay: a forged or wrongly locked receipt is not recorded
+  ---
+  duration_ms: 3.037813
+  type: 'test'
+  ...
+# Subtest: review \#1: a receipt already received shows "already received", never "short by"
+ok 28 - review \#1: a receipt already received shows "already received", never "short by"
+  ---
+  duration_ms: 1.051379
+  type: 'test'
+  ...
+# Subtest: review \#2: a genuine part payment is kept, so it can be collected and never counted twice
+ok 29 - review \#2: a genuine part payment is kept, so it can be collected and never counted twice
+  ---
+  duration_ms: 10.925712
+  type: 'test'
+  ...
+# Subtest: review \#5: the amount is what lands after the mint fee
+ok 30 - review \#5: the amount is what lands after the mint fee
+  ---
+  duration_ms: 9.903367
+  type: 'test'
+  ...
+# Subtest: review \#6: proofs from an expired keyset are refused
+ok 31 - review \#6: proofs from an expired keyset are refused
+  ---
+  duration_ms: 0.489906
+  type: 'test'
+  ...
+# Subtest: audit: proofs from a keyset that expires before the trader can collect are refused (3-day margin)
+ok 32 - audit: proofs from a keyset that expires before the trader can collect are refused (3-day margin)
+  ---
+  duration_ms: 0.384898
+  type: 'test'
+  ...
+# Subtest: review \#8: a forged proof with a refund tag says "not signed", not "could take it back"
+ok 33 - review \#8: a forged proof with a refund tag says "not signed", not "could take it back"
+  ---
+  duration_ms: 0.360251
+  type: 'test'
+  ...
+# Subtest: replay: two scans racing on one phone record it once
+ok 34 - replay: two scans racing on one phone record it once
+  ---
+  duration_ms: 0.430677
+  type: 'test'
+  ...
+# Subtest: audit: a receipt with more than 64 distinct proofs is refused before any signature work
+ok 35 - audit: a receipt with more than 64 distinct proofs is refused before any signature work
+  ---
+  duration_ms: 21.476101
+  type: 'test'
+  ...
+# Subtest: NUT-00 hash_to_curve vectors
+ok 36 - NUT-00 hash_to_curve vectors
+  ---
+  duration_ms: 6.385392
+  type: 'test'
+  ...
+# Subtest: NUT-12 hash_e vector
+ok 37 - NUT-12 hash_e vector
+  ---
+  duration_ms: 1.222997
+  type: 'test'
+  ...
+# Subtest: NUT-12 DLEQ on a BlindSignature vector
+ok 38 - NUT-12 DLEQ on a BlindSignature vector
+  ---
+  duration_ms: 144.023184
+  type: 'test'
+  ...
+# Subtest: NUT-12 deterministic nonce vector verifies
+ok 39 - NUT-12 deterministic nonce vector verifies
+  ---
+  duration_ms: 35.557713
+  type: 'test'
+  ...
+# Subtest: NUT-12 DLEQ on a Proof vector (what the trader checks offline)
+ok 40 - NUT-12 DLEQ on a Proof vector (what the trader checks offline)
+  ---
+  duration_ms: 24.900704
+  type: 'test'
+  ...
+# Subtest: the Proof vector fails with any one value changed
+ok 41 - the Proof vector fails with any one value changed
+  ---
+  duration_ms: 120.334871
+  type: 'test'
+  ...
+# Subtest: invalid points and scalars are false, never a throw
+ok 42 - invalid points and scalars are false, never a throw
+  ---
+  duration_ms: 10.915237
+  type: 'test'
+  ...
+# Subtest: one random change to a genuine receipt is never green (3000 runs, seed 20261111)
+ok 43 - one random change to a genuine receipt is never green (3000 runs, seed 20261111)
+  ---
+  duration_ms: 573.61074
+  type: 'test'
+  ...
+# Subtest: random changes to a valid lock never produce a lock to someone else that passes (3000 runs)
+ok 44 - random changes to a valid lock never produce a lock to someone else that passes (3000 runs)
+  ---
+  duration_ms: 102.077105
+  type: 'test'
+  ...
+# Subtest: accepts a plain lock to the trader: SIG_INPUTS, empty tags, or no tags
+ok 45 - accepts a plain lock to the trader: SIG_INPUTS, empty tags, or no tags
+  ---
+  duration_ms: 2.653506
+  type: 'test'
+  ...
+# Subtest: accepts nutshell-style spacing and any field order
+ok 46 - accepts nutshell-style spacing and any field order
+  ---
+  duration_ms: 0.201143
+  type: 'test'
+  ...
+# Subtest: refuses a plain secret: anyone holding it can spend it
+ok 47 - refuses a plain secret: anyone holding it can spend it
+  ---
+  duration_ms: 0.318588
+  type: 'test'
+  ...
+# Subtest: refuses a lock to someone else
+ok 48 - refuses a lock to someone else
+  ---
+  duration_ms: 0.157657
+  type: 'test'
+  ...
+# Subtest: refuses the trader key written another way (uppercase, flipped prefix, x-only)
+ok 49 - refuses the trader key written another way (uppercase, flipped prefix, x-only)
+  ---
+  duration_ms: 0.387693
+  type: 'test'
+  ...
+# Subtest: refuses other kinds of lock
+ok 50 - refuses other kinds of lock
+  ---
+  duration_ms: 0.20621
+  type: 'test'
+  ...
+# Subtest: refuses a duplicate "data" key: a mint might read the other one
+ok 51 - refuses a duplicate "data" key: a mint might read the other one
+  ---
+  duration_ms: 0.319309
+  type: 'test'
+  ...
+# Subtest: refuses escapes that some mint parsers would read differently
+ok 52 - refuses escapes that some mint parsers would read differently
+  ---
+  duration_ms: 0.13312
+  type: 'test'
+  ...
+# Subtest: refuses broken NUT-10 shapes
+ok 53 - refuses broken NUT-10 shapes
+  ---
+  duration_ms: 1.378841
+  type: 'test'
+  ...
+# Subtest: refuses every way for the payer to take it back
+ok 54 - refuses every way for the payer to take it back
+  ---
+  duration_ms: 0.681924
+  type: 'test'
+  ...
+# Subtest: refuses locks other keys could spend or that need more signatures
+ok 55 - refuses locks other keys could spend or that need more signatures
+  ---
+  duration_ms: 0.340691
+  type: 'test'
+  ...
+# Subtest: refuses sigflags and tags we do not accept
+ok 56 - refuses sigflags and tags we do not accept
+  ---
+  duration_ms: 1.908907
+  type: 'test'
+  ...
+# Subtest: review \#3: the nonce must be 8 to 32 bytes of hex, keeping secrets well inside mint limits
+ok 57 - review \#3: the nonce must be 8 to 32 bytes of hex, keeping secrets well inside mint limits
+  ---
+  duration_ms: 0.276756
+  type: 'test'
+  ...
+# Subtest: refuses everything when our own cached key is broken
+ok 58 - refuses everything when our own cached key is broken
+  ---
+  duration_ms: 0.079089
+  type: 'test'
+  ...
+# Subtest: audit: a lock with whitespace around it is refused, so every mint reads it the same way
+ok 59 - audit: a lock with whitespace around it is refused, so every mint reads it the same way
+  ---
+  duration_ms: 0.227442
+  type: 'test'
+  ...
+# Subtest: same mint written different ways normalizes to one string
+ok 60 - same mint written different ways normalizes to one string
+  ---
+  duration_ms: 2.020435
+  type: 'test'
+  ...
+# Subtest: refuses http, credentials, query, fragment and junk
+ok 61 - refuses http, credentials, query, fragment and junk
+  ---
+  duration_ms: 0.238308
+  type: 'test'
+  ...
+# Subtest: a different port or path is a different mint
+ok 62 - a different port or path is a different mint
+  ---
+  duration_ms: 0.235884
+  type: 'test'
+  ...
+# Subtest: reads the NUT-11 example secret, compact and with spaces
+ok 63 - reads the NUT-11 example secret, compact and with spaces
+  ---
+  duration_ms: 2.413486
+  type: 'test'
+  ...
+# Subtest: reads empty arrays and objects
+ok 64 - reads empty arrays and objects
+  ---
+  duration_ms: 0.315173
+  type: 'test'
+  ...
+# Subtest: refuses duplicate keys (parsers disagree on which one wins)
+ok 65 - refuses duplicate keys (parsers disagree on which one wins)
+  ---
+  duration_ms: 0.603947
+  type: 'test'
+  ...
+# Subtest: refuses backslashes, so no escapes of any kind
+ok 66 - refuses backslashes, so no escapes of any kind
+  ---
+  duration_ms: 0.191337
+  type: 'test'
+  ...
+# Subtest: refuses anything outside printable ASCII
+ok 67 - refuses anything outside printable ASCII
+  ---
+  duration_ms: 0.349224
+  type: 'test'
+  ...
+# Subtest: refuses raw tab or newline inside a string
+ok 68 - refuses raw tab or newline inside a string
+  ---
+  duration_ms: 0.217416
+  type: 'test'
+  ...
+# Subtest: refuses numbers, booleans and null
+ok 69 - refuses numbers, booleans and null
+  ---
+  duration_ms: 0.322154
+  type: 'test'
+  ...
+# Subtest: refuses trailing commas, missing commas, junk after the value
+ok 70 - refuses trailing commas, missing commas, junk after the value
+  ---
+  duration_ms: 0.264868
+  type: 'test'
+  ...
+# Subtest: refuses deep nesting without blowing the stack
+ok 71 - refuses deep nesting without blowing the stack
+  ---
+  duration_ms: 0.440862
+  type: 'test'
+  ...
+# Subtest: accepts depth used by a real secret, refuses one level more
+ok 72 - accepts depth used by a real secret, refuses one level more
+  ---
+  duration_ms: 0.515294
+  type: 'test'
+  ...
+# Subtest: refuses input over the length cap
+ok 73 - refuses input over the length cap
+  ---
+  duration_ms: 0.290135
+  type: 'test'
+  ...
+# Subtest: object keys like __proto__ stay plain data
+ok 74 - object keys like __proto__ stay plain data
+  ---
+  duration_ms: 0.146621
+  type: 'test'
+  ...
+# Subtest: round trip keeps every field, DLEQ included
+ok 75 - round trip keeps every field, DLEQ included
+  ---
+  duration_ms: 6.809629
+  type: 'test'
+  ...
+# Subtest: v2 keyset ids travel short and come back full from the saved ids
+ok 76 - v2 keyset ids travel short and come back full from the saved ids
+  ---
+  duration_ms: 5.808074
+  type: 'test'
+  ...
+# Subtest: large amounts and long secrets survive
+ok 77 - large amounts and long secrets survive
+  ---
+  duration_ms: 0.629336
+  type: 'test'
+  ...
+# Subtest: every single-character edit is refused or decodes to something different, never a throw past decodeReceipt
+ok 78 - every single-character edit is refused or decodes to something different, never a throw past decodeReceipt
+  ---
+  duration_ms: 757.611477
+  type: 'test'
+  ...
+# Subtest: malformed CBOR is refused with a reason
+ok 79 - malformed CBOR is refused with a reason
+  ---
+  duration_ms: 0.53266
+  type: 'test'
+  ...
+# Subtest: fee math: the customer pays just enough for the price to land
+ok 80 - fee math: the customer pays just enough for the price to land
+  ---
+  duration_ms: 4.960261
+  type: 'test'
+  ...
+# Subtest: keyset choice: the trader's cached keyset if the mint still has it
+ok 81 - keyset choice: the trader's cached keyset if the mint still has it
+  ---
+  duration_ms: 0.416586
+  type: 'test'
+  ...
+# Subtest: customer pays: the receipt is green on the trader's phone, offline
+ok 82 - customer pays: the receipt is green on the trader's phone, offline
+  ---
+  duration_ms: 377.990318
+  type: 'test'
+  ...
+# Subtest: the receipt is locked to the trader, not to whoever holds it
+ok 83 - the receipt is locked to the trader, not to whoever holds it
+  ---
+  duration_ms: 227.985518
+  type: 'test'
+  ...
+# Subtest: an unpaid invoice gives no receipt, and the mint is not asked to restore
+ok 84 - an unpaid invoice gives no receipt, and the mint is not asked to restore
+  ---
+  duration_ms: 159.133292
+  type: 'test'
+  ...
+# Subtest: an expired unpaid invoice reads as expired
+ok 85 - an expired unpaid invoice reads as expired
+  ---
+  duration_ms: 16.347437
+  type: 'test'
+  ...
+# Subtest: bad network: the mint signed but the answer was lost; the same receipt is recovered
+ok 86 - bad network: the mint signed but the answer was lost; the same receipt is recovered
+  ---
+  duration_ms: 238.172311
+  type: 'test'
+  ...
+# Subtest: finishing the same payment twice gives the same receipt, not double money
+ok 87 - finishing the same payment twice gives the same receipt, not double money
+  ---
+  duration_ms: 411.595378
+  type: 'test'
+  ...
+# Subtest: a mint whose signature proof is wrong never produces a receipt
+ok 88 - a mint whose signature proof is wrong never produces a receipt
+  ---
+  duration_ms: 75.076747
+  type: 'test'
+  ...
+# Subtest: the customer cannot take the payment back; only the trader can collect it
+ok 89 - the customer cannot take the payment back; only the trader can collect it
+  ---
+  duration_ms: 270.116174
+  type: 'test'
+  ...
+# Subtest: bad network while collecting: the answer is recovered, nothing lost
+ok 90 - bad network while collecting: the answer is recovered, nothing lost
+  ---
+  duration_ms: 216.795209
+  type: 'test'
+  ...
+# Subtest: cash out pays the invoice and returns the change, locked to the trader
+ok 91 - cash out pays the invoice and returns the change, locked to the trader
+  ---
+  duration_ms: 316.216515
+  type: 'test'
+  ...
+# Subtest: cash out refuses an invoice bigger than the balance, before spending anything
+ok 92 - cash out refuses an invoice bigger than the balance, before spending anything
+  ---
+  duration_ms: 95.037751
+  type: 'test'
+  ...
+# Subtest: recovery code: written down, typed back, same key
+ok 93 - recovery code: written down, typed back, same key
+  ---
+  duration_ms: 2.361948
+  type: 'test'
+  ...
+# Subtest: recovery code: a mistyped character is caught
+ok 94 - recovery code: a mistyped character is caught
+  ---
+  duration_ms: 0.813172
+  type: 'test'
+  ...
+# Subtest: a collect whose answer never came back is recovered from the saved plan
+ok 95 - a collect whose answer never came back is recovered from the saved plan
+  ---
+  duration_ms: 216.127727
+  type: 'test'
+  ...
+# Subtest: a cash out that went through while the phone was away is settled with its change
+ok 96 - a cash out that went through while the phone was away is settled with its change
+  ---
+  duration_ms: 312.453041
+  type: 'test'
+  ...
+# Subtest: a cash out that never reached the mint gives the money back
+ok 97 - a cash out that never reached the mint gives the money back
+  ---
+  duration_ms: 225.397782
+  type: 'test'
+  ...
+# Subtest: a short receipt is one plain QR any Cashu wallet can read
+ok 98 - a short receipt is one plain QR any Cashu wallet can read
+  ---
+  duration_ms: 1.689748
+  type: 'test'
+  ...
+# Subtest: a long receipt splits into frames and joins back in any order, with repeats
+ok 99 - a long receipt splits into frames and joins back in any order, with repeats
+  ---
+  duration_ms: 0.89185
+  type: 'test'
+  ...
+# Subtest: progress is reported while frames come in
+ok 100 - progress is reported while frames come in
+  ---
+  duration_ms: 0.741364
+  type: 'test'
+  ...
+# Subtest: frames from another receipt start the collection over
+ok 101 - frames from another receipt start the collection over
+  ---
+  duration_ms: 0.882927
+  type: 'test'
+  ...
+# Subtest: an edited frame is caught by the check and the receipt is not returned
+ok 102 - an edited frame is caught by the check and the receipt is not returned
+  ---
+  duration_ms: 0.554983
+  type: 'test'
+  ...
+# Subtest: nonsense frame numbers are ignored
+ok 103 - nonsense frame numbers are ignored
+  ---
+  duration_ms: 0.170887
+  type: 'test'
+  ...
+# Subtest: audit: a stray code seen mid-way through an animated receipt is ignored, not judged
+ok 104 - audit: a stray code seen mid-way through an animated receipt is ignored, not judged
+  ---
+  duration_ms: 0.615164
+  type: 'test'
+  ...
+# Subtest: naira to sats always covers the price, and never by more than a sat
+ok 105 - naira to sats always covers the price, and never by more than a sat
+  ---
+  duration_ms: 38.978632
+  type: 'test'
+  ...
+# Subtest: animated receipts survive any order, repeats and other receipts mixed in
+ok 106 - animated receipts survive any order, repeats and other receipts mixed in
+  ---
+  duration_ms: 86.358784
+  type: 'test'
+  ...
+# Subtest: pay links: anything valid round-trips, anything else is refused without throwing
+ok 107 - pay links: anything valid round-trips, anything else is refused without throwing
+  ---
+  duration_ms: 116.114352
+  type: 'test'
+  ...
+# Subtest: fee math: the least amount that lands the price, for every price and fee
+ok 108 - fee math: the least amount that lands the price, for every price and fee
+  ---
+  duration_ms: 38.525892
+  type: 'test'
+  ...
+# Subtest: end to end, 40 random sales: green for the price, refused above it, money conserved through collect and cash out
+ok 109 - end to end, 40 random sales: green for the price, refused above it, money conserved through collect and cash out
+  ---
+  duration_ms: 28367.2774
+  type: 'test'
+  ...
+# Subtest: caches info and the active sat keyset, skipping junk keys
+ok 110 - caches info and the active sat keyset, skipping junk keys
+  ---
+  duration_ms: 28.097276
+  type: 'test'
+  ...
+# Subtest: refuses http, a mint with no active sat keyset, and bad fees
+ok 111 - refuses http, a mint with no active sat keyset, and bad fees
+  ---
+  duration_ms: 2.122359
+  type: 'test'
+  ...
+# Subtest: the right PIN unlocks the seed
+ok 112 - the right PIN unlocks the seed
+  ---
+  duration_ms: 17.883955
+  type: 'test'
+  ...
+# Subtest: a wrong PIN or an edited blob unlocks nothing
+ok 113 - a wrong PIN or an edited blob unlocks nothing
+  ---
+  duration_ms: 6.404
+  type: 'test'
+  ...
+# Subtest: the seed is not stored in the clear
+ok 114 - the seed is not stored in the clear
+  ---
+  duration_ms: 2.007105
+  type: 'test'
+  ...
+# Subtest: PINs are 4 to 8 digits
+ok 115 - PINs are 4 to 8 digits
+  ---
+  duration_ms: 0.448925
+  type: 'test'
+  ...
+# Subtest: the real round count takes a moment, not an age
+ok 116 - the real round count takes a moment, not an age
+  ---
+  duration_ms: 113.345001
+  type: 'test'
+  ...
+# Subtest: naira to sats rounds up, so the trader is never short
+ok 117 - naira to sats rounds up, so the trader is never short
+  ---
+  duration_ms: 1.066051
+  type: 'test'
+  ...
+# Subtest: sats back to naira for display
+ok 118 - sats back to naira for display
+  ---
+  duration_ms: 0.151137
+  type: 'test'
+  ...
+# Subtest: rate age reads plainly
+ok 119 - rate age reads plainly
+  ---
+  duration_ms: 0.239259
+  type: 'test'
+  ...
+# Subtest: money is formatted the way a stall prices it
+ok 120 - money is formatted the way a stall prices it
+  ---
+  duration_ms: 44.17726
+  type: 'test'
+  ...
+# Subtest: fetches naira and works CFA out from the euro peg
+ok 121 - fetches naira and works CFA out from the euro peg
+  ---
+  duration_ms: 23.480712
+  type: 'test'
+  ...
+# Subtest: a bad price answer is an error, never a zero rate
+ok 122 - a bad price answer is an error, never a zero rate
+  ---
+  duration_ms: 1.585562
+  type: 'test'
+  ...
+# Implicit numeric coercion of Amount is deprecated and throws in cashu-ts v5; use .add()/.subtract()/.compareTo(), .toBigInt() or .toNumber(), or .toString() for display.
+# Subtest: a cashuB receipt decodes to something the offline check accepts
+ok 123 - a cashuB receipt decodes to something the offline check accepts
+  ---
+  duration_ms: 8.743664
+  type: 'test'
+  ...
+# Subtest: anything that is not a cashuB token is refused before decoding
+ok 124 - anything that is not a cashuB token is refused before decoding
+  ---
+  duration_ms: 0.208433
+  type: 'test'
+  ...
+# Subtest: garbage after the prefix is a refusal, not a throw
+ok 125 - garbage after the prefix is a refusal, not a throw
+  ---
+  duration_ms: 0.108523
+  type: 'test'
+  ...
+# Subtest: compatible with cashu-ts both ways (v1 and v2 keyset ids)
+ok 126 - compatible with cashu-ts both ways (v1 and v2 keyset ids)
+  ---
+  duration_ms: 8.617254
+  type: 'test'
+  ...
+# Subtest: a pay link round-trips through its URL
+ok 127 - a pay link round-trips through its URL
+  ---
+  duration_ms: 2.945685
+  type: 'test'
+  ...
+# Subtest: the sticker link has no amount and still parses
+ok 128 - the sticker link has no amount and still parses
+  ---
+  duration_ms: 0.360802
+  type: 'test'
+  ...
+# Subtest: the link is short enough for an easy QR
+ok 129 - the link is short enough for an easy QR
+  ---
+  duration_ms: 0.240271
+  type: 'test'
+  ...
+# Subtest: refuses a bad key, mint, shop, amount or price
+ok 130 - refuses a bad key, mint, shop, amount or price
+  ---
+  duration_ms: 3.64175
+  type: 'test'
+  ...
+# Subtest: shop names are cleaned to plain text
+ok 131 - shop names are cleaned to plain text
+  ---
+  duration_ms: 0.805099
+  type: 'test'
+  ...
+# Subtest: a link that is not ours is refused without throwing
+ok 132 - a link that is not ours is refused without throwing
+  ---
+  duration_ms: 0.261944
+  type: 'test'
+  ...
+1..132
+# tests 132
+# suites 0
+# pass 132
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29953.682896

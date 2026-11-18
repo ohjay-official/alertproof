@@ -1,0 +1,12 @@
+v22.23.4
+sealpay@0.1.0 /home/runner/work/sealpay/sealpay
+├── @cashu/cashu-ts@4.13.1
+├── @noble/curves@2.4.0
+├── @noble/hashes@2.4.0
+├── @types/node@22.20.5
+├── esbuild@0.28.2
+├── jsqr@1.4.0
+├── playwright@1.65.1
+├── typescript@6.0.3
+└── uqr@0.1.3
+

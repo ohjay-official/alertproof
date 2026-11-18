@@ -1,0 +1,107 @@
+== package exports
+.
+== d.ts files
+node_modules/@cashu/cashu-ts/lib/types/index.d.ts
+== getEncodedToken / getDecodedToken / Token / Proof declarations
+16:export declare class Amount {
+17-    #private;
+18-    private readonly value;
+19-    private constructor();
+20-    /**
+21-     * Parse/normalize supported inputs into an Amount.
+22-     *
+23-     * @throws If input is negative, exceeds the u64 range, is a non-finite/non-integer `number`, or
+24-     *   is above the safe integer limit for a `number`.
+25-     */
+26-    static from(input: AmountLike): Amount;
+27-    static zero(): Amount;
+28-    static one(): Amount;
+--
+949:       export declare function getDecodedToken(tokenString: string, keysetIds: readonly string[]): Token;
+950-
+951-       /**
+952-        * Decodes a raw binary token (`craw` + `B` + CBOR) into a {@link Token}.
+953-        *
+954-        * @param bytes The encoded binary token.
+955-        * @param keysetIds Array of full keyset ID strings, eg: from `KeyChain.getAllKeysetIds()`. When
+956-        *   provided, short keyset IDs are mapped to their full form like {@link getDecodedToken} does.
+957-        * @returns Cashu token object.
+958-        */
+959-       export declare function getDecodedTokenBinary(bytes: Uint8Array, keysetIds?: readonly string[]): Token;
+960-
+961-       /**
+--
+964:       export declare function getEncodedToken(token: Token, opts?: {
+965-           removeDleq?: boolean;
+966-       }): string;
+967-
+968-       /**
+969-        * Encodes a {@link Token} as a raw binary token (`craw` + `B` + CBOR).
+970-        */
+971-       export declare function getEncodedTokenBinary(token: Token): Uint8Array;
+972-
+973-       /**
+974-        * Get preimage from a witness if present.
+975-        *
+976-        * @param witness From a Proof.
+== migration notes on tokens and amounts
+9:## The `Amount` value object — what changed and what it means for your app
+11:Many v4 APIs that previously returned or accepted `number` now use `Amount`. This avoids silent precision loss above `Number.MAX_SAFE_INTEGER`, which matters for millisatoshi or other high-volume integer accounting.
+13:`Amount` is immutable, bigint-backed, and non-negative. It provides:
+19:- **Construction**: `Amount.from(x)` accepts `number`, `bigint`, `string`, or another `Amount`
+23:Before you start updating call sites, decide how deeply you want to adopt `Amount`:
+25:**Option A — Adopt `Amount` natively (recommended for new or large-amount apps)**
+26:Keep `Amount` flowing through your own functions and types. Use `Amount` helpers for arithmetic, and convert to `number` only at boundaries that truly require a JavaScript number. For display, prefer string-safe formatting where possible: for integer-unit currencies like SAT, avoid eager `.toNumber()` and use runtime-appropriate bigint/string formatting; for decimal or minor-unit currencies, use formatting helpers that preserve precision instead of eagerly calling `.toNumber()`.
+29:Call `.toNumber()` immediately on every `Amount` the library returns, then leave all your internal types as `number`. Safe as long as your amounts stay within `Number.MAX_SAFE_INTEGER`.
+31:Both strategies are valid. The sections below show the mechanical changes required; the key question is whether you propagate `Amount` inward or flatten it at the edge.
+33:### Practical `Amount` rules
+35:- `Amount` is for non-negative integer magnitudes only. Model sign separately.
+36:- `AmountLike` is a boundary type: `number | bigint | string | Amount`.
+37:- Normalize external input with `Amount.from(...)`, then keep `Amount` in domain logic.
+38:- Plain JSON is acceptable for minimal migrations because `Amount.toJSON()` emits a decimal string.
+39:- If you round-trip an `Amount` through plain JSON, rehydrate it with `Amount.from(...)`.
+45:const raw: AmountLike = getExternalAmount();
+46:const amount = Amount.from(raw);
+90:## Amount fields on mint responses now return `Amount` objects
+92:Previously typed as `number`, the following fields now return an `Amount` value object (imported from `@cashu/cashu-ts`):
+96:| `MintQuoteBolt11Response`    | `amount`                                 |
+97:| `MintQuoteBolt12Response`    | `amount`, `amount_paid`, `amount_issued` |
+98:| `MeltQuoteBaseResponse`      | `amount`                                 |
+101:| `SerializedBlindedSignature` | `amount`                                 |
+103:`SwapMethod.min_amount` / `max_amount` (from `GetInfoResponse`) are now typed as `AmountLike` (`number | string | bigint | Amount`).
+111:const sats = meltQuote.fee_reserve + meltQuote.amount;
+112:const n = meltQuote.amount;
+115:const sats = meltQuote.fee_reserve.add(meltQuote.amount).toNumber();
+116:const n = meltQuote.amount.toNumber(); // throws if value > Number.MAX_SAFE_INTEGER
+118:// Amount.toJSON() always emits a decimal string (previously number | string).
+120:JSON.stringify({ amount: meltQuote.amount }); // → '{"amount":"1000"}' (not '{"amount":1000}')
+122:// Rehydrate a JSON leaf value back to Amount
+123:const parsed = JSON.parse('{"amount":"1000"}');
+124:const amount = Amount.from(parsed.amount);
+129:## `SerializedBlindedMessage.amount` is now `Amount`
+131:`SerializedBlindedMessage` is the outbound wire type sent to the mint. Its `amount` field is now typed as `Amount` (previously `number`), consistent with the rest of the v4 amount model.
+133:This type is not typically constructed directly by application code; it is produced internally by `BlindedMessage.getSerializedBlindedMessage()`. If you build `SerializedBlindedMessage` objects manually, update the `amount` field:
+137:const output: SerializedBlindedMessage = { amount: 1000, id: keysetId, B_: hex };
+140:const output: SerializedBlindedMessage = { amount: Amount.from(1000), id: keysetId, B_: hex };
+149:## `sumProofs()` and `TokenMetadata.amount` now return `Amount`
+151:`sumProofs()` (utility function) and the `amount` field on `TokenMetadata` (returned by `getTokenMetadata()`) previously returned `number`; both now return an `Amount` value object.
+156:const m: number = getTokenMetadata(token).amount;
+159:const total: Amount = sumProofs(proofs);
+161:const m: Amount = getTokenMetadata(token).amount;
+166:## `OutputData.sumOutputAmounts()` now returns `Amount`
+168:Previously returned `number`; now returns an `Amount` value object to be consistent with the rest of the v4 API.
+172:const total: number = OutputData.sumOutputAmounts(outputs);
+175:const total: Amount = OutputData.sumOutputAmounts(outputs);
+181:## `SwapPreview.amount` and `SwapPreview.fees` are now `Amount`
+183:Both fields on the `SwapPreview` type (returned by `prepareSwapToSend()` / `prepareSwapToReceive()`) are typed as `Amount`.
+185:If you persist or deserialize previews yourself, rehydrate before calling `Amount` methods. In arithmetic expressions, you only need to rehydrate the operand you are invoking the method on: methods like `.subtract(...)` already accept `AmountLike` for the argument.
+189:const net = preview.amount - preview.fees;
+192:const net = Amount.from(preview.amount).subtract(preview.fees);
+198:## `PaymentRequest.amount` now returns `Amount`
+200:The `amount` field on `PaymentRequest` (and the result of `decodePaymentRequest()`) previously returned `number | undefined`; it now returns `Amount | undefined`.
+204:const sats: number | undefined = request.amount;
+207:const sats: number | undefined = request.amount?.toNumber();
+212:## Utility functions `splitAmount` and `getKeysetAmounts` now return `Amount[]`
+214:These public functions in `@cashu/cashu-ts` previously returned `number[]`; they now return `Amount[]`.
+218:const chunks: number[] = splitAmount(1000, keys);
+219:const denominations: number[] = getKeysetAmounts(keyset);

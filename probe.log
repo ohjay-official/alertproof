@@ -1,0 +1,27 @@
+== https://nofees.testnut.cashu.space
+curl: (6) Could not resolve host: nofees.testnut.cashu.space
+
+HTTP 000 in 0.015606s
+== https://testnut.cashu.space
+OST","path":"/v1/melt/bolt11"},{"method":"POST","path":"/v1/mint/bolt12"},{"method":"POST","path":"/v1/melt/bolt12"},{"method":"POST","path":"/v1/mint/onchain"},{"method":"POST","path":"/v1/melt/onchain"}]},"20":{"supported":true},"29":{"max_batch_size":100,"methods":["bolt11","bolt12","onchain"]}},"icon_url":"https://image.nostr.build/46ee47763c345d2cfa3317f042d332003f498ee281fb42808d47a7d3b9585911.png","motd":"This test mint has been reset. Old tokens and quotes are no longer valid. Fake payments only; do not send real funds.","time":1794961401,"max_array_length":1000}
+HTTP 200 in 0.253563s
+== CORS: testnut GET
+HTTP/2 200 
+access-control-allow-headers: *
+access-control-allow-methods: GET, POST, OPTIONS
+access-control-allow-origin: *
+== CORS: testnut POST preflight
+HTTP/2 200 
+access-control-allow-headers: *
+access-control-allow-methods: GET, POST, OPTIONS
+access-control-allow-origin: *
+== price API (CoinGecko)
+HTTP/2 200 
+access-control-allow-origin: *
+access-control-allow-methods: POST, PUT, DELETE, GET, OPTIONS
+access-control-expose-headers: link, per-page, total
+access-control-max-age: 7200
+access-control-request-method: *
+access-control-allow-headers: Origin, X-Requested-With, Content-Type, Accept, Authorization
+{"bitcoin":{"ngn":87566477,"eur":58982}}
+
