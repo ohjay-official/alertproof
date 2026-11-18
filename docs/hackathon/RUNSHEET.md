@@ -26,6 +26,11 @@ Read this first in every session, then the plan in [docs/SPEC.md](../SPEC.md) an
 - **Sealpay is parked**, his call: no submission for now; kept for a later event. The live site stays up.
 - Options found on Nov 18 if it's picked back up: Kiroween 2026 (any app, must be built with Kiro, new projects only, closes Dec 4 22:00 UTC, $100k; would mean a Kiro rebuild); Colosseum Eternal (Solana, 4-week sprint anytime between main hackathons, $25k award, accelerator); Stellar Community Fund (up to $150k in XLM, rolling rounds); OpenSats (Jan to Feb). Solana or Stellar would need the money side redesigned (USDC-backed ecash) to keep the offline check.
 
+## Parked (Nov 18)
+
+- **Sealpay is parked**, his call: kept for later, not entered anywhere now. The repo, the live site (sealpay-beta.vercel.app) and every doc stay as they are. Nothing more to do until he picks it up.
+- When it comes back: the idea isn't tied to bitcoin. Cashu mints can run in dollars (unit `usd`), so the same offline receipt can carry stablecoin-backed money; or the design ports to another chain with a mint-style issuer. Options looked at on Nov 18: Kiroween (Kiro, closed Dec 4; would need a rebuild in Kiro), Colosseum Eternal (Solana, any time), Stellar Community Fund (grant), OpenSats (Bitcoin grant, Jan to Feb).
+
 ## Status change (Nov 17)
 
 - **Not submitting to Dakar Bitcoin Hack** (his call, Nov 17: five other engagements). Retargeting the same build.
