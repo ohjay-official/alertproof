@@ -1,0 +1,13 @@
+site: 10 pages
+service worker sealpay-056a48feeafd: 12 files
+app.js {"web/src":28717,"src/verify":5287,"src/wallet":3921,"src/app":3511}
+pay.js {"web/src":5651}
+chunk-KJ3FXQ36.js {"@noble/curves":35169,"src/wallet":19448,"uqr":10329,"@noble/hashes":8697,"src/verify":5576,"web/src":2937}
+chunk-5YWY5JMQ.js {"jsqr":130462}
+chunk-EZ4WPP63.js {}
+app.js                          41915 B    16170 B gz
+chunk-5YWY5JMQ.js              130524 B    47037 B gz
+chunk-EZ4WPP63.js                 282 B      218 B gz
+chunk-KJ3FXQ36.js               82628 B    30535 B gz
+pay.js                           5876 B     2529 B gz
+first load, gzipped: trader 48.6 KB, customer 35.1 KB (budget 60.0 KB)

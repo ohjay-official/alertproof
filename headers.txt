@@ -1,0 +1,22 @@
+HTTP/2 200 
+accept-ranges: bytes
+access-control-allow-origin: *
+age: 3
+cache-control: public, max-age=0, must-revalidate
+content-disposition: inline
+content-security-policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://testnut.cashu.space https://mint.minibits.cash https://api.coingecko.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+content-type: text/html; charset=utf-8
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+date: Wed, 18 Nov 2026 06:54:54 GMT
+etag: "c214a0fe77cb44c1e57925a9e14f756c"
+last-modified: Wed, 18 Nov 2026 06:54:51 GMT
+permissions-policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()
+referrer-policy: no-referrer
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains
+x-content-type-options: nosniff
+x-vercel-cache: HIT
+x-vercel-id: sfo1::hxvp2-1794984894833-42e2a4447dc9
+content-length: 9834
+

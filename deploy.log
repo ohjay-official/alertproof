@@ -1,0 +1,27 @@
+Vercel CLI 65.11.0
+Retrieving project…
+Deploying oh-jay-s-projects/sealpay
+  Inspect         https://vercel.com/oh-jay-s-projects/sealpay/C1CCrojL5FnHRjfaBvovDbJF9mhW
+  Production      https://sealpay-jhl2kt015-oh-jay-s-projects.vercel.app
+https://sealpay-jhl2kt015-oh-jay-s-projects.vercel.appBuilding…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 7 GB
+Retrieving list of deployment files...
+Previous build caches not available.
+Downloading 64 deployment files...
+[2K[1A[2K[G  Production      https://sealpay-jhl2kt015-oh-jay-s-projects.vercel.app
+Completing…
+▲ Aliased         https://sealpay-beta.vercel.app
+
+✓ Ready in 7s
+
+Next steps:
+- Automatically deploy changes on every push by connecting Git:
+  vercel git connect
+- Check the production response:
+  vercel curl https://sealpay-beta.vercel.app
+- View build logs:
+  vercel inspect sealpay-jhl2kt015-oh-jay-s-projects.vercel.app --logs
+- Create a new deployment from the same source:
+  vercel redeploy sealpay-jhl2kt015-oh-jay-s-projects.vercel.app
